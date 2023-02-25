@@ -52,3 +52,4 @@ venv/
 
 # Project
 models/weights/
+models/data/datasets/
