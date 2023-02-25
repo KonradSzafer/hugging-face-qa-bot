@@ -49,3 +49,6 @@ venv/
 
 # OS
 .DS_Store
+
+# Project
+models/weights/
