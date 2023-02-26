@@ -14,3 +14,9 @@ To generate the requirements.txt file, run the following command:
 ```bash
 pipreqsnb --force .
 ```
+
+## Dataset List
+
+Below is a list of datasets we have created:
+- [Stack Overflow - Python](https://huggingface.co/datasets/KonradSzafer/stackoverflow_python_preprocessed)
+- [Stack Overflow - Linux](https://huggingface.co/datasets/KonradSzafer/stackoverflow_linux)
