@@ -16,19 +16,16 @@ def preprocess_dataset():
         soup = BeautifulSoup(example, 'html.parser')
         return ''.join(soup.findAll(string=True))
 
-    def transform_questions(example):
-        example['question_body'] = html2text(example['question_body'])
+    def transforms(example):
+        example['answer'] = html2text(example['answer_body'])
+        example['question'] = html2text(example['question_body'])
         return example
 
-    def transform_answers(example):
-        example['answer_body'] = html2text(example['answer_body'])
-        return example
-
-    dataset = dataset.map(lambda example: transform_questions(example))
-    dataset = dataset.map(lambda example: transform_answers(example))
+    dataset = dataset.map(lambda example: transforms(example))
     dataset = dataset.remove_columns([
         'question_score', 'question_date', 'question_id',
         'answer_date', 'answer_id', 'answer_score', 'tags',
+        'question_body', 'answer_body'
     ])
     return dataset
 
@@ -36,8 +33,8 @@ def preprocess_dataset():
 def show_info(dataset):
     print(dataset.info, '\n')
     print(f'dataset len: {len(dataset)}')
-    print(f"example question: {dataset[0]['question_body']}")
-    print(f"example answer: {dataset[0]['answer_body']}")
+    print(f"example question: {dataset[0]['question']}")
+    print(f"example answer: {dataset[0]['answer']}")
 
 
 if __name__ == '__main__':
