@@ -1,5 +1,6 @@
 import re
 import csv
+import time
 import requests
 from typing import List
 import pandas as pd
@@ -49,6 +50,8 @@ def scrape_questions_page(url: str, min_votes: int, min_answers: int) -> List[Li
                 qa_data.append(scrape_question_with_answers(question_href))
             except Exception as error:
                 print(error)
+
+        time.sleep(1.5)
     return qa_data
 
 
@@ -76,12 +79,12 @@ def crawl_and_save_qa(
 
 
 if __name__ == '__main__':
-    filename = 'stack_overflow_python.csv'
-    url = 'https://stackoverflow.com/questions/tagged/python?tab=votes&page={}&pagesize=15'
+    filename = '../datasets/stackoverflow_linux.csv'
+    url = 'https://stackoverflow.com/questions/tagged/linux?tab=votes&page={}&pagesize=15'
     crawl_and_save_qa(
         filename=filename,
         base_url=url,
-        start_page=1,
+        start_page=21,
         n_pages=10,
         min_votes=1,
         min_answers=1
