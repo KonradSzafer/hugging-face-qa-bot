@@ -52,4 +52,5 @@ venv/
 
 # Project
 models/weights/
-models/data/datasets/
+data/datasets/*
+!data/datasets/repositories_urls.json

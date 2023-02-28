@@ -1,12 +1,28 @@
+import os
 import glob
+import json
+import subprocess
 import pandas as pd
+
+
+def download_repositories():
+    repositories_dir = "datasets/huggingface_repositories"
+    if not os.path.exists(repositories_dir):
+        os.makedirs(repositories_dir)
+    with open("datasets/hf_repositories_urls.json", "r") as f:
+        repositories_urls = json.load(f)["urls"]
+        for url in repositories_urls:
+            try:
+                subprocess.run(["git", "clone", url], cwd=repositories_dir)
+            except subprocess.CalledProcessError as e:
+                print("Command failed with error:", e.stderr)
 
 
 def extract_markdown_from_directories():
     languages = pd.read_csv("./datasets/huggingface_docs/language-codes.csv").loc[:,"alpha2"].tolist()
     languages.remove("en")
 
-    files = glob.glob('**/*.md', recursive=True) + glob.glob('**/*.mdx', recursive=True)
+    files = glob.glob('datasets/huggingface_repositories/**/*.md', recursive=True) + glob.glob('**/*.mdx', recursive=True)
     filtered_files = []
 
     for file in files:
@@ -27,4 +43,5 @@ def extract_markdown_from_directories():
 
 
 if __name__ == '__main__':
+    download_repositories()
     extract_markdown_from_directories()
