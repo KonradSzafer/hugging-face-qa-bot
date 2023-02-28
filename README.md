@@ -1,4 +1,13 @@
-# hugging-face-qa-bot
+# Hugging Face Question Answering Bot
+
+This repository aims to develop a Hugging Face question answering bot that helps users develop own ML solutions, and troubleshoot technical issues related to the Hugging Face libraries. Our goal is to provide an efficient open-source solution.
+
+# Table of Contents
+- [Datasets](#dataset-list)
+- [Development instructions](#development-intructions)
+
+## Development Instructions
+
 To install all necessary Python packages, run the following command:
 
 ```bash
