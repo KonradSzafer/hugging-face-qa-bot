@@ -54,3 +54,4 @@ venv/
 models/weights/
 data/datasets/*
 !data/datasets/repositories_urls.json
+wandb/
