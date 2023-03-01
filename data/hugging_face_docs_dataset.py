@@ -19,10 +19,10 @@ def download_repositories():
 
 
 def extract_markdown_from_directories():
-    languages = pd.read_csv("./datasets/huggingface_docs/language-codes.csv").loc[:,"alpha2"].tolist()
+    languages = pd.read_csv("language-codes.csv").loc[:,"alpha2"].tolist()
     languages.remove("en")
 
-    files = glob.glob('datasets/huggingface_repositories/**/*.md', recursive=True) + glob.glob('**/*.mdx', recursive=True)
+    files = glob.glob('./datasets/huggingface_repositories/**/*.md', recursive=True) + glob.glob('**/*.mdx', recursive=True)
     filtered_files = []
 
     for file in files:
@@ -37,8 +37,8 @@ def extract_markdown_from_directories():
     for file in filtered_files:
         with open(file, 'r') as f:
             data = f.read()
-        print(f'./datasets/huggingface_docs/hf_filtered/{file.split("/")[-1:][0]}')
-        with open(f'./datasets/huggingface_docs/hf_filtered/{file.split("/")[-1:][0]}', 'w') as f:
+        print(f'./datasets/huggingface_repositories/{file.split("/")[-1:][0]}')
+        with open(f'./datasets/huggingface_repositories/{file.split("/")[-1:][0]}', 'w') as f:
             f.write(data)
 
 
