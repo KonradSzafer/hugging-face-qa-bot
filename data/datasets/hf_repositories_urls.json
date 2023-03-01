@@ -1,0 +1,19 @@
+{
+    "urls": [
+        "https://github.com/huggingface/transformers",
+        "https://github.com/huggingface/diffusers",
+        "https://github.com/huggingface/datasets",
+        "https://github.com/gradio-app/gradio",
+        "https://github.com/huggingface/huggingface_hub",
+        "https://github.com/huggingface/optimum",
+        "https://github.com/huggingface/tokenizers",
+        "https://github.com/huggingface/course",
+        "https://github.com/huggingface/deep-rl-class",
+        "https://github.com/huggingface/evaluate",
+        "https://github.com/huggingface/datasets-server",
+        "https://github.com/huggingface/simulate",
+        "https://github.com/huggingface/hub-docs",
+        "https://github.com/huggingface/pytorch-image-models",
+        "https://github.com/huggingface/safetensors"
+    ]
+}
