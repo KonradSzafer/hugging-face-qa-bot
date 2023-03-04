@@ -1,3 +1,7 @@
+from bot.config import Config
+
+
+config = Config()
 
 if __name__ == '__main__':
     print('hello!')
