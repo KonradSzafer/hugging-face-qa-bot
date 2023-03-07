@@ -51,6 +51,7 @@ venv/
 .DS_Store
 
 # Project
+.env
 models/weights/
 data/datasets/*
 !data/datasets/hf_repositories_urls.json
