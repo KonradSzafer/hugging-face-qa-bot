@@ -4,8 +4,8 @@ from langchain import PromptTemplate, HuggingFaceHub, LLMChain
 class LangChainModel:
     def __init__(
         self,
-        model_id: str,
         hf_api_key: str,
+        model_id: str,
     ):
         self.model = HuggingFaceHub(
             repo_id=model_id,

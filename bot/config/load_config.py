@@ -13,5 +13,6 @@ def get_env(env_name: str) -> str:
 @dataclass
 class Config:
     huggingface_token: str = get_env('HUGGINGFACE_TOKEN')
+    huggingface_model_id: str = get_env('HUGGINGFACE_MODEL_ID')
     discord_token: str = get_env('DISCORD_TOKEN')
     discord_guild: str = get_env('DISCORD_GUILD')

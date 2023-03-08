@@ -1,0 +1,2 @@
+However, the MLP policy can be improved by incorporating a self-attention-based LSTM model, referred to as SA-LSTM policy.
+The self-attention mechanism in the LSTM model captures temporal dependencies in financial time series data. 
