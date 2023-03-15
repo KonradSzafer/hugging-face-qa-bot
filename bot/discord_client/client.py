@@ -1,3 +1,4 @@
+from typing import List
 import discord
 from bot.logger import logger
 
@@ -9,8 +10,8 @@ class DiscordClient(discord.Client):
         intents.message_content = True
         super().__init__(intents=intents, command_prefix='!')
         self.model = model
-        self.initial_prompt = \
-            'no context'
+        self.n_last_messages: int = 5
+        self.initial_prompt: str = ''
 
     async def on_ready(self):
         logger.info('Successfully logged in as: {0.user}'.format(self))
@@ -18,9 +19,19 @@ class DiscordClient(discord.Client):
     async def on_message(self, message):
         if message.author == self.user:
             return
+
+        context = self.initial_prompt + '\n'
+        last_messages: List[str] = []
+        async for msg in message.channel.history(
+            limit=self.n_last_messages):
+            last_messages.append(msg.content)
+        last_messages.reverse()
+        last_messages.pop() # remove last message from context
+        context += '\n'.join(last_messages)
+
         logger.info('Received message: {0.content}'.format(message))
         response = self.model.get_answer(
-            self.initial_prompt,
+            context,
             message.content
         )
         logger.info('Sending response: {0}'.format(response))

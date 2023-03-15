@@ -10,7 +10,7 @@ class LangChainModel:
         self.model = HuggingFaceHub(
             repo_id=model_id,
             model_kwargs={
-                'max_length': 4000,
+                'max_length': 1000,
                 'length_penalty': 2,
                 'num_beams': 16,
                 'no_repeat_ngram_size': 2,
