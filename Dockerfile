@@ -10,4 +10,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY bot/ bot/
 
+EXPOSE 80
+
 ENTRYPOINT [ "python3", "-m", "bot" ]
