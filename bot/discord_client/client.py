@@ -11,7 +11,7 @@ class DiscordClient(discord.Client):
         super().__init__(intents=intents, command_prefix='!')
         self.model = model
         self.n_last_messages: int = 5
-        self.initial_prompt: str = ''
+        self.initial_prompt: str = 'previous conversation messages:'
 
     async def on_ready(self):
         logger.info('Successfully logged in as: {0.user}'.format(self))
@@ -20,13 +20,13 @@ class DiscordClient(discord.Client):
         if message.author == self.user:
             return
 
-        context = self.initial_prompt + '\n'
         last_messages: List[str] = []
         async for msg in message.channel.history(
             limit=self.n_last_messages):
             last_messages.append(msg.content)
         last_messages.reverse()
         last_messages.pop() # remove last message from context
+        context = self.initial_prompt + '\n'
         context += '\n'.join(last_messages)
 
         logger.info('Received message: {0.content}'.format(message))
