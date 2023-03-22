@@ -36,6 +36,7 @@ class DiscordClient(discord.Client):
             return
         if self.enable_commands and message.content == '--clear':
             await message.channel.purge()
+            return
 
         last_messages: List[str] = []
         async for msg in message.channel.history(
