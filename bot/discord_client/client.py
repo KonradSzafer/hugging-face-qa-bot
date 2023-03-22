@@ -9,7 +9,8 @@ class DiscordClient(discord.Client):
         self,
         model: Model,
         num_last_messages: int = 5,
-        use_names_in_context: bool = True
+        use_names_in_context: bool = True,
+        enable_commands: bool = True
     ):
         logger.info('Initializing Discord client...')
         intents = discord.Intents.all()
@@ -18,6 +19,7 @@ class DiscordClient(discord.Client):
         self.model = model
         self.num_last_messages: int = num_last_messages
         self.use_names_in_context: bool = use_names_in_context
+        self.enable_commands: bool = enable_commands
 
     def _set_initial_prompt(self) -> None:
         name = str(self.user).split('#')[0]
@@ -32,6 +34,8 @@ class DiscordClient(discord.Client):
     async def on_message(self, message):
         if message.author == self.user:
             return
+        if self.enable_commands and message.content == '--clear':
+            await message.channel.purge()
 
         last_messages: List[str] = []
         async for msg in message.channel.history(
