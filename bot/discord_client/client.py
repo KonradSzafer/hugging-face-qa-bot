@@ -1,12 +1,13 @@
 from typing import List
 import discord
 from bot.logger import logger
+from bot.question_answering import Model
 
 
 class DiscordClient(discord.Client):
     def __init__(
         self,
-        model,
+        model: Model,
         num_last_messages: int = 5,
         use_names_in_context: bool = True
     ):

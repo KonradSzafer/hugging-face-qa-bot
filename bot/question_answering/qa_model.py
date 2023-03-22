@@ -1,12 +1,23 @@
+from abc import ABC, abstractmethod
 from langchain import PromptTemplate, HuggingFaceHub, LLMChain
 
 
-class LangChainModel:
+class Model(ABC):
+    def __init__(self):
+        pass
+
+    @abstractmethod
+    def get_answer(self, context: str, question: str) -> str:
+        pass
+
+
+class LangChainModel(Model):
     def __init__(
         self,
         hf_api_key: str,
         model_id: str,
     ):
+        super().__init__()
         self.model = HuggingFaceHub(
             repo_id=model_id,
             model_kwargs={
