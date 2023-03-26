@@ -3,6 +3,9 @@ import glob
 import json
 import subprocess
 import pandas as pd
+import re
+from bs4 import BeautifulSoup
+from markdown import markdown
 
 
 def download_repositories():
@@ -37,10 +40,17 @@ def extract_markdown_from_directories():
     for file in filtered_files:
         with open(file, 'r') as f:
             data = f.read()
+        data = markdown_cleaner(data)
         print(f'./datasets/huggingface_repositories/{file.split("/")[-1:][0]}')
         with open(f'./datasets/huggingface_repositories/{file.split("/")[-1:][0]}', 'w') as f:
             f.write(data)
 
+
+def markdown_cleaner(data: str):
+    soupped = BeautifulSoup(markdown(data), "html.parser")
+    raw_text = ''.join(soupped.findAll(text=True))
+    clean_text = re.sub(r"<!--.*?-->", "", raw_text, flags=re.DOTALL)
+    return "\n".join([t for t in clean_text.split("\n") if t])
 
 if __name__ == '__main__':
     download_repositories()
