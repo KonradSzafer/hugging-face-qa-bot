@@ -35,15 +35,14 @@ def extract_markdown_from_directories():
                 break
         else:
             filtered_files.append(file)
-
+    data = ""
     # copy the files to /datasets/huggingface_docs/hf_filtered
     for file in filtered_files:
         with open(file, 'r') as f:
-            data = f.read()
-        data = markdown_cleaner(data)
-        print(f'./datasets/huggingface_repositories/{file.split("/")[-1:][0]}')
-        with open(f'./datasets/huggingface_repositories/{file.split("/")[-1:][0]}', 'w') as f:
-            f.write(data)
+            data += markdown_cleaner(f.read())
+    for i in range(0, len(data), 512*32):
+        with open(f"datasets/huggingface_docs/hf_filtered_{i/(512*32)}.txt", "w") as f:
+            f.write(data[i:i+512*32])
 
 
 def markdown_cleaner(data: str):
