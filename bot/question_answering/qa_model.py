@@ -19,11 +19,12 @@ class LangChainModel(Model):
     def __init__(
         self,
         hf_api_key: str,
-        model_id: str,
+        question_answering_model_id: str,
+        embedding_model_id: str,
     ):
         super().__init__()
         self.model = HuggingFaceHub(
-            repo_id=model_id,
+            repo_id=question_answering_model_id,
             model_kwargs={
                 'max_length': 1000,
                 'length_penalty': 2,
@@ -35,7 +36,10 @@ class LangChainModel(Model):
             }, 
             huggingfacehub_api_token=hf_api_key
         )
-        embedding_model = HuggingFaceHubEmbeddings(repo_id="sentence-transformers/all-MiniLM-L6-v2", huggingfacehub_api_token=hf_api_key)
+        embedding_model = HuggingFaceHubEmbeddings(
+            repo_id=embedding_model_id,
+            huggingfacehub_api_token=hf_api_key
+        )
         self.template = 'Question: {question} \nContext: {context}'
         self.prompt = PromptTemplate(
             template=self.template,

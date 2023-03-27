@@ -9,7 +9,8 @@ def main():
     config = Config()
     model = LangChainModel(
         config.huggingface_token,
-        config.huggingface_model_id
+        config.question_answering_model_id,
+        config.embedding_model_id
     )
     client = DiscordClient(
         model,
