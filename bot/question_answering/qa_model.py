@@ -18,26 +18,36 @@ class Model(ABC):
 
 
 class CustomLLM(LLM):
-    def __init__(self, model_name: str):
+    model_name: str = None
+    pipeline: pipeline = None
+
+    def __init__(self, model_name: str, device: str = 'cpu'):
+        super().__init__()
+        device = 0 if device == 'cuda' else -1
+        self.model_name = model_name
         self.pipeline = pipeline(
             "text-generation",
             model=model_name,
-            device=0,
-            model_kwargs={"torch_dtype":torch.bfloat16}
+            device=device,
+            model_kwargs={
+                'max_length': 512,
+                "torch_dtype":torch.bfloat16
+            }
         )
 
     def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
         prompt_length = len(prompt)
+        num_output = 512
         response = self.pipeline(prompt, max_new_tokens=num_output)[0]["generated_text"]
         return response[prompt_length:]
 
     @property
     def _identifying_params(self) -> Mapping[str, Any]:
-        return {"name_of_model": "empty"}
+        return {"name_of_model": self.model_name}
 
     @property
     def _llm_type(self) -> str:
-        return "custom"
+        return self.model_name
 
 
 class LangChainModel(Model):
@@ -46,7 +56,7 @@ class LangChainModel(Model):
         hf_api_key: str,
         question_answering_model_id: str,
         embedding_model_id: str,
-        run_localy: bool = False
+        run_localy: bool = True
     ):
         super().__init__()
         if run_localy:
