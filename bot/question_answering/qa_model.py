@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Mapping, Optional, List, Any
 import torch
 from transformers import pipeline
+from sentence_transformers import SentenceTransformer
 from langchain import PromptTemplate, HuggingFaceHub, LLMChain
 from langchain.embeddings import HuggingFaceHubEmbeddings
 from langchain.llms.base import LLM
@@ -50,6 +51,17 @@ class CustomLLM(LLM):
         return self.model_name
 
 
+class EmbeddingModel(SentenceTransformer):
+    def __init__(self, model_name: str):
+        super().__init__(model_name)
+
+    def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
+        return self.encode(prompt)
+
+    def embed_query(self, query: str):
+        return self.encode(query)
+
+
 class LangChainModel(Model):
     def __init__(
         self,
@@ -60,7 +72,8 @@ class LangChainModel(Model):
     ):
         super().__init__()
         if run_localy:
-            self.model = CustomLLM(question_answering_model_id)
+            self.question_answering_model = CustomLLM(question_answering_model_id)
+            self.embedding_model = EmbeddingModel(embedding_model_id)
         else:
             self.model = HuggingFaceHub(
                 repo_id=question_answering_model_id,
@@ -75,28 +88,28 @@ class LangChainModel(Model):
                 }, 
                 huggingfacehub_api_token=hf_api_key
             )
-
-        embedding_model = HuggingFaceHubEmbeddings(
-            repo_id=embedding_model_id,
-            huggingfacehub_api_token=hf_api_key
-        )
+            self.embedding_model = HuggingFaceHubEmbeddings(
+                repo_id=embedding_model_id,
+                huggingfacehub_api_token=hf_api_key
+            )
         self.template = 'Question: {question} \nContext: {context}'
         self.prompt = PromptTemplate(
             template=self.template,
             input_variables=['question', 'context']
         )
-        self.llm_chain = LLMChain(prompt=self.prompt, llm=self.model)
+        self.llm_chain = LLMChain(prompt=self.prompt, llm=self.question_answering_model)
         self.knowledge_index = GPTSimpleVectorIndex.load_from_disk(
             "index.json",
-            embed_model=LangchainEmbedding(embedding_model),
-            llm_predictor=LLMPredictor(self.model)
+            embed_model=LangchainEmbedding(self.embedding_model),
+            llm_predictor=LLMPredictor(self.question_answering_model)
         )
 
 
     def get_answer(self, context: str, question: str) -> str:
         doc_extracted = self.knowledge_index.query(question).response
         context += doc_extracted
-        return self.llm_chain.run(
+        response = self.llm_chain.run(
             question=question,
             context=context
         )
+        return response
