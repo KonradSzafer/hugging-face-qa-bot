@@ -40,8 +40,11 @@ def extract_markdown_from_directories():
     for file in filtered_files:
         with open(file, 'r') as f:
             data += markdown_cleaner(f.read())
+    docs_path = "datasets/huggingface_docs/"
     for i in range(0, len(data), 512*32):
-        with open(f"datasets/huggingface_docs/hf_filtered_{i/(512*32)}.txt", "w") as f:
+        if not os.path.exists(docs_path):
+            os.makedirs(docs_path)
+        with open(docs_path+f"hf_filtered_{i/(512*32)}.txt", "w") as f:
             f.write(data[i:i+512*32])
 
 
@@ -54,6 +57,7 @@ def markdown_cleaner(data: str):
     # discard non english text
     clean_text = re.sub(r"[^a-zA-Z0-9\s]", "", clean_text, flags=re.DOTALL)
     return "\n".join([t for t in clean_text.split("\n") if t])
+
 
 if __name__ == '__main__':
     download_repositories()
