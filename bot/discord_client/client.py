@@ -29,14 +29,16 @@ class DiscordClient(discord.Client):
 
     async def on_ready(self):
         logger.info('Successfully logged in as: {0.user}'.format(self))
+        await self.change_presence(activity=discord.Game(name='Chatting...'))
         self._set_initial_prompt()
 
     async def on_message(self, message):
         if message.author == self.user:
             return
-        if self.enable_commands and message.content == '--clear':
-            await message.channel.purge()
-            return
+        if self.enable_commands and message.content.startswith('!'):
+            if message.content == '!clear':
+                await message.channel.purge()
+                return
 
         last_messages: List[str] = []
         async for msg in message.channel.history(

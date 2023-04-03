@@ -50,7 +50,7 @@ def extract_markdown_from_directories():
 
 def markdown_cleaner(data: str):
     soupped = BeautifulSoup(markdown(data), "html.parser")
-    raw_text = ''.join(soupped.findAll(text=True))
+    raw_text = ''.join(soupped.findAll(string=True))
     clean_text = re.sub(r"<!--.*?-->", "", raw_text, flags=re.DOTALL)
     # remove any special tokens e.g <|endoftext|>
     clean_text = re.sub(r"<\|endoftext\|>", "", clean_text, flags=re.DOTALL)
