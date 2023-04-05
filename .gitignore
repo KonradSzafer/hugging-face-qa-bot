@@ -52,6 +52,7 @@ venv/
 
 # Project
 .env
+.temp
 models/weights/
 data/datasets/*
 !data/datasets/hf_repositories_urls.json
