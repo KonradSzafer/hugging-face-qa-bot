@@ -53,10 +53,7 @@ class DiscordClient(discord.Client):
         context += '\n'.join(last_messages)
 
         logger.info('Received message: {0.content}'.format(message))
-        response = self.model.get_answer(
-            context,
-            message.content
-        )
+        response = self.model.get_answer(message.content, context)
         logger.info('Sending response: {0}'.format(response))
         try:
             await message.channel.send(response)
