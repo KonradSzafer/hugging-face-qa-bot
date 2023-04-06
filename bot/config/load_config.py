@@ -13,6 +13,13 @@ def get_env(env_name: str, default = None) -> str:
     else:
         return env
 
+def to_bool(variable: str) -> bool:
+    if variable.lower() in ['true', '1']:
+        return True
+    elif variable.lower() in ['false', '0']:
+        return False
+    else:
+        raise ValueError(f'Cannot parse: {variable}')
 
 @dataclass
 class Config:
@@ -20,6 +27,7 @@ class Config:
     question_answering_model_id: str = get_env('QUESTION_ANSWERING_MODEL_ID')
     embedding_model_id: str = get_env('EMBEDDING_MODEL_ID')
     discord_token: str = get_env('DISCORD_TOKEN')
-    num_last_messages: int = get_env('NUM_LAST_MESSAGES', 5)
-    use_names_in_context: bool = get_env('USE_NAMES_IN_CONTEXT', True)
-    enable_commands: bool = get_env('ENABLE_COMMANDS', True)
+    num_last_messages: int = int(get_env('NUM_LAST_MESSAGES', 10))
+    use_names_in_context: bool = to_bool(get_env('USE_NAMES_IN_CONTEXT', False))
+    enable_commands: bool = to_bool(get_env('ENABLE_COMMANDS', True))
+    run_localy: bool = to_bool(get_env('RUN_LOCALY', True))
