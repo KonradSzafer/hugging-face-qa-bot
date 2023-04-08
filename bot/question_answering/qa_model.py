@@ -8,6 +8,7 @@ from langchain import PromptTemplate, LLMChain
 from langchain.embeddings import HuggingFaceHubEmbeddings
 from langchain.llms.base import LLM
 from llama_index import GPTSimpleVectorIndex, LLMPredictor, LangchainEmbedding, ServiceContext, PromptHelper
+from llama_index.node_parser import SimpleNodeParser
 from llama_index.logger import LlamaLogger
 from bot.logger import logger
 
@@ -32,7 +33,6 @@ class Model(ABC):
 class FlanT5Local(Model):
     def __init__(self, model_name: str):
         super().__init__(model_name)
-        # 'google/flan-t5-large'
         self.tokenizer = self._load_tokenizer()
         self.model = self._load_model()
 
@@ -118,9 +118,8 @@ class LangChainModel():
         super().__init__()
         self.question_answering_model = CustomLLM(
             question_answering_model_id, hf_api_key, run_localy)
-        # self.embedding_model = EmbeddingModel(
-        #     embedding_model_id)
-        # self.embedding_model = HuggingFaceEmbeddings()
+        # self.embedding_model = EmbeddingModel(embedding_model_id)
+        self.embedding_model = HuggingFaceHubEmbeddings()
 
         self.template = 'Question: {question} \nContext: {context}'
         self.prompt_template = PromptTemplate(
@@ -132,24 +131,24 @@ class LangChainModel():
             llm=self.question_answering_model
         )
 
-        # max_input_size = 1096
-        # num_output = 512
-        # max_chunk_overlap = 50
-        # service_context = ServiceContext(
-        #     llm_predictor=LLMPredictor(llm=CustomLLM()),
-        #     embed_model=LangchainEmbedding(embedding_model),
-        #     prompt_helper=PromptHelper(max_input_size, num_output, max_chunk_overlap),
-        #     node_parser=SimpleNodeParser(),
-        #     llama_logger=LlamaLogger()
-        # )
-        # self.knowledge_index = GPTSimpleVectorIndex.load_from_disk(
-        #     "index.json", service_context=service_context
-        # )
+        max_input_size = 1096
+        num_output = 512
+        max_chunk_overlap = 50
+        service_context = ServiceContext(
+            llm_predictor=LLMPredictor(llm=self.question_answering_model),
+            embed_model=LangchainEmbedding(self.embedding_model),
+            prompt_helper=PromptHelper(max_input_size, num_output, max_chunk_overlap),
+            node_parser=SimpleNodeParser(),
+            llama_logger=LlamaLogger()
+        )
+        self.knowledge_index = GPTSimpleVectorIndex.load_from_disk(
+            "index.json", service_context=service_context
+        )
 
 
     def get_answer(self, question: str, context: str = '') -> str:
-        # docs_extracted = self.knowledge_index.query(question)
-        # context += docs_extracted.source_nodes[0].node.get_text()
+        docs_extracted = self.knowledge_index.query(question)
+        context += docs_extracted.source_nodes[0].node.get_text()
         response = self.llm_chain.run(
             question=question,
             context=context
