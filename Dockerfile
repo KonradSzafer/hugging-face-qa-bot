@@ -9,7 +9,8 @@ RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY .env .
-COPY index.json .
+COPY ./index/index.faiss ./index/index.faiss
+COPY ./index/index.pkl ./index/index.pkl
 COPY bot/ bot/
 
 ENTRYPOINT [ "python3", "-m", "bot" ]
