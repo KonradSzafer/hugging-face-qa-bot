@@ -8,10 +8,7 @@ def main():
     logger.info('Starting Application...')
     config = Config()
     model = LangChainModel(
-        question_answering_model_id=config.question_answering_model_id,
-        embedding_model_id=config.embedding_model_id,
-        hf_api_key=config.huggingface_token,
-        run_localy=config.run_localy
+        model_id=config.question_answering_model_id,
     )
     client = DiscordClient(
         model=model,
