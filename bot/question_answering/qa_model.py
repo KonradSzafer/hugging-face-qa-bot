@@ -21,40 +21,34 @@ class Model(ABC):
 class LangChainModel(Model):
     def __init__(
         self,
-        model_id: str,
+        llm_model_id: str,
+        embedding_model_id: str,
     ):
         super().__init__()
-        self.model = HuggingFaceHub(
-            repo_id=model_id,
+        model = HuggingFaceHub(
+            repo_id=llm_model_id,
             model_kwargs={
                 'temperature': 0.1,
             }, 
         )
-        print(model_id)
-        model_name = "hkunlp/instructor-large"
-        model_name = "sentence-transformers/all-MiniLM-L6-v2"
-        embed_instruction = "Represent the Hugging Face library documentation"
-        query_instruction = "Query the most relevant piece of information from the Hugging Face documentation"
-        embedding_model = HuggingFaceEmbeddings(model_name=model_name)
-        self.template = 'BEGINNING OF CONTEXT {context} END OF CONTEXT \n QUESTION: {question}'
-        self.prompt = PromptTemplate(
-            template=self.template,
+        embedding_model = HuggingFaceEmbeddings(model_name=embedding_model_id)
+        template = 'BEGINNING OF CONTEXT {context} END OF CONTEXT \n QUESTION: {question}'
+        prompt = PromptTemplate(
+            template=template,
             input_variables=['question', 'context']
         )
         
-        self.llm_chain = LLMChain(prompt=self.prompt, llm=self.model)
+        self.llm_chain = LLMChain(prompt=prompt, llm=model)
         self.knowledge_index = FAISS.load_local("./index", embedding_model)
 
 
     def get_answer(self, context: str, question: str) -> str:
-        # get 3 most relevant documents
         relevant_docs = self.knowledge_index.similarity_search(
             query=context,
             k=1
         )
-        # add them to the context
-        context = context + '\nRETRIEVED DOCUMENTS THAT MAY CONTAIN INFO RELEVANT TO QUESTION:' + "".join([doc.page_content for doc in relevant_docs])
-        print(context)
-        resp=self.llm_chain.run(question=question, context="")
-        print(f"RESPOSNE: {resp}")
-        return resp
+
+        context += '\nRETRIEVED DOCUMENTS THAT MAY CONTAIN INFO RELEVANT TO QUESTION:'
+        context += "".join([doc.page_content for doc in relevant_docs])
+        response = self.llm_chain.run(question=question, context=context)
+        return response
