@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from langchain import PromptTemplate, HuggingFaceHub, LLMChain
-from langchain.embeddings import HuggingFaceHubEmbeddings, HuggingFaceInstructEmbeddings
+from langchain import PromptTemplate, HuggingFaceHub, LLMChain 
+from langchain.embeddings import HuggingFaceHubEmbeddings, HuggingFaceInstructEmbeddings, HuggingFaceEmbeddings
 from langchain.llms.base import LLM
 from langchain.llms import OpenAI
 from langchain.vectorstores import FAISS
@@ -30,21 +30,19 @@ class LangChainModel(Model):
                 'temperature': 0.1,
             }, 
         )
+        print(model_id)
         model_name = "hkunlp/instructor-large"
+        model_name = "sentence-transformers/all-MiniLM-L6-v2"
         embed_instruction = "Represent the Hugging Face library documentation"
         query_instruction = "Query the most relevant piece of information from the Hugging Face documentation"
-        embedding_model = HuggingFaceInstructEmbeddings(
-            model_name=model_name,
-            embed_instruction=embed_instruction,
-            query_instruction=query_instruction,
-        )
-        self.template = 'Context: {context} \n Question: {question}'
+        embedding_model = HuggingFaceEmbeddings(model_name=model_name)
+        self.template = 'BEGINNING OF CONTEXT {context} END OF CONTEXT \n QUESTION: {question}'
         self.prompt = PromptTemplate(
             template=self.template,
             input_variables=['question', 'context']
         )
         
-        self.llm_chain = LLMChain(prompt=self.prompt, llm=OpenAI(temperature=0.1))
+        self.llm_chain = LLMChain(prompt=self.prompt, llm=self.model)
         self.knowledge_index = FAISS.load_local("./index", embedding_model)
 
 
@@ -52,12 +50,11 @@ class LangChainModel(Model):
         # get 3 most relevant documents
         relevant_docs = self.knowledge_index.similarity_search(
             query=context,
-            k=7
+            k=1
         )
         # add them to the context
-        context = context + '\n Retrieved document info (format it and make output beautiful):' + "".join([doc.page_content for doc in relevant_docs])
+        context = context + '\nRETRIEVED DOCUMENTS THAT MAY CONTAIN INFO RELEVANT TO QUESTION:' + "".join([doc.page_content for doc in relevant_docs])
         print(context)
-        return self.llm_chain.run(
-            question=question,
-            context=context
-        )
+        resp=self.llm_chain.run(question=question, context="")
+        print(f"RESPOSNE: {resp}")
+        return resp
