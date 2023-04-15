@@ -39,7 +39,7 @@ def extract_markdown_from_directories():
     for file in filtered_files:
         data = ""
         with open(file, 'r') as f:
-            data = markdown_cleaner(f.read())
+            data = f.read()
         docs_path = "datasets/huggingface_docs/"
         with open(docs_path + file.split("/")[-1], 'w') as f:
             f.write(data)
