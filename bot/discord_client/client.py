@@ -20,12 +20,12 @@ class DiscordClient(discord.Client):
         self.num_last_messages: int = num_last_messages
         self.use_names_in_context: bool = use_names_in_context
         self.enable_commands: bool = enable_commands
+        self.max_message_len = 2000
 
     def _set_initial_prompt(self) -> None:
         name = str(self.user).split('#')[0]
         self.initial_prompt: str = \
-            f'your name is: {name}\n' \
-            f'previous conversation messages:'
+            f'your name is: {name}\n'
 
     async def on_ready(self):
         logger.info('Successfully logged in as: {0.user}'.format(self))
@@ -56,6 +56,12 @@ class DiscordClient(discord.Client):
         response = self.model.get_answer(message.content, context)
         logger.info('Sending response: {0}'.format(response))
         try:
+            if len(response) > self.max_message_len:
+                logger.warning(
+                    f'generated response was to long: {len(response)} characters ' \
+                    f'truncating to {self.max_message_len} characters'
+                )
+                response = response[:self.max_message_len]
             await message.channel.send(response)
         except Exception as e:
             logger.error('Failed to send response: {0}'.format(e))
