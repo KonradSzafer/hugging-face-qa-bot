@@ -23,7 +23,7 @@ def to_bool(variable: str) -> bool:
 
 @dataclass
 class Config:
-    huggingface_token: str = get_env('HUGGINGFACE_TOKEN')
+    huggingface_token: str = get_env('HUGGINGFACEHUB_API_TOKEN')
     question_answering_model_id: str = get_env('QUESTION_ANSWERING_MODEL_ID')
     embedding_model_id: str = get_env('EMBEDDING_MODEL_ID')
     discord_token: str = get_env('DISCORD_TOKEN')
