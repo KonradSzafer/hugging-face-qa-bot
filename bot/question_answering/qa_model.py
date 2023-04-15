@@ -1,6 +1,6 @@
 import os
 import subprocess
-from typing import Mapping, Optional, List
+from typing import Mapping, Optional, List, Any
 from langchain import PromptTemplate, HuggingFaceHub, LLMChain
 from langchain.llms import OpenAI, HuggingFacePipeline
 from langchain.llms.base import LLM
@@ -10,28 +10,28 @@ from bot.logger import logger
 
 
 class LocalBinaryModel(LLM):
-    self.model_dir: str = None
-    self.executable_file: str = None
+    model_path: str = None
+    executable_file: str = None
 
     def __init__(
         self,
-        model_dir: str = None,
-        executable_file: str = None
+        model_id: str = None,
     ):
         super().__init__()
-        self.model_dir = f'bot/question_answering/{model_dir}'
-        self.executable_file = executable_file
-        if not os.path.exists(self.model_dir):
-            raise ValueError(f'{self.model_dir} does not exist')
+        self.model_path = f'bot/question_answering/{model_id[:model_id.rfind("/")]}/'
+        self.executable_file = f'./{model_id.split("/")[-1]}'
+        if not os.path.exists(self.model_path):
+            raise ValueError(f'{self.model_path} does not exist')
 
     def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
         command = [self.executable_file, '-p', prompt]
         response = subprocess.run(
             command,
+            cwd=self.model_path,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE
         )
-        response = result.stdout.decode('utf-8')
+        response = response.stdout.decode('utf-8')
         return response
 
     @property
@@ -43,7 +43,7 @@ class LocalBinaryModel(LLM):
         return self.model_dir
 
 
-class LangChainModel(Model):
+class LangChainModel():
     def __init__(
         self,
         llm_model_id: str,
@@ -66,14 +66,16 @@ class LangChainModel(Model):
         if run_locally:
             logger.info('running models locally')
             if 'local_models/' in llm_model_id:
-                llm_model = LocalBinaryModel(llm_model_id)
+                llm_model = LocalBinaryModel(
+                    model_id=llm_model_id
+                )
             else:
                 llm_model = HuggingFacePipeline.from_model_id(
                     model_id=llm_model_id,
                     task='text2text-generation',
                     model_kwargs=self.model_kwargs
                 )
-                embedding_model = HuggingFaceEmbeddings(model_name=embedding_model_id)
+            embedding_model = HuggingFaceEmbeddings(model_name=embedding_model_id)
         else:
             logger.info('running models on huggingface hub')
             llm_model = HuggingFaceHub(

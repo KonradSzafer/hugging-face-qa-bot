@@ -1,1 +1,1 @@
-from .qa_model import Model, LangChainModel
+from .qa_model import LangChainModel

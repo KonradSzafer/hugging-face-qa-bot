@@ -1,13 +1,13 @@
 from typing import List
 import discord
 from bot.logger import logger
-from bot.question_answering import Model
+from bot.question_answering import LangChainModel
 
 
 class DiscordClient(discord.Client):
     def __init__(
         self,
-        model: Model,
+        model: LangChainModel,
         num_last_messages: int = 5,
         use_names_in_context: bool = True,
         enable_commands: bool = True
@@ -53,7 +53,7 @@ class DiscordClient(discord.Client):
         context += '\n'.join(last_messages)
 
         logger.info('Received message: {0.content}'.format(message))
-        response = await self.model.get_answer(message.content, context)
+        response = self.model.get_answer(message.content, context)
         logger.info('Sending response: {0}'.format(response))
         try:
             if len(response) > self.max_message_len:
