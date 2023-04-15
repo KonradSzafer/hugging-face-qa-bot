@@ -3,7 +3,6 @@ discord.py==2.2.2
 evaluate==0.4.0
 huggingface_hub==0.12.1
 langchain==0.0.130
-llama_index==0.5.6
 nltk==3.8.1
 numpy==1.24.2
 pandas==1.5.3
@@ -14,3 +13,6 @@ sentence_transformers==2.2.2
 torch==2.0.0
 tqdm==4.64.1
 transformers==4.27.4
+InstructorEmbedding==1.0.0
+faiss_cpu==1.7.3
+openai==0.27.2
