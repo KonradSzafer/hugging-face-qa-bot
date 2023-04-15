@@ -30,4 +30,4 @@ class Config:
     num_last_messages: int = int(get_env('NUM_LAST_MESSAGES', 10))
     use_names_in_context: bool = to_bool(get_env('USE_NAMES_IN_CONTEXT', False))
     enable_commands: bool = to_bool(get_env('ENABLE_COMMANDS', True))
-    run_localy: bool = to_bool(get_env('RUN_LOCALY', True))
+    run_locally: bool = to_bool(get_env('RUN_LOCALLY', True))

@@ -53,7 +53,7 @@ class DiscordClient(discord.Client):
         context += '\n'.join(last_messages)
 
         logger.info('Received message: {0.content}'.format(message))
-        response = self.model.get_answer(message.content, context)
+        response = await self.model.get_answer(message.content, context)
         logger.info('Sending response: {0}'.format(response))
         try:
             if len(response) > self.max_message_len:
