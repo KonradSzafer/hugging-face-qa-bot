@@ -10,6 +10,7 @@ def main():
     model = LangChainModel(
         llm_model_id=config.question_answering_model_id,
         embedding_model_id=config.embedding_model_id,
+        index_name=config.index_name,
         run_locally=config.run_locally
     )
     client = DiscordClient(

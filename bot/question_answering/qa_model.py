@@ -48,9 +48,10 @@ class LangChainModel():
         self,
         llm_model_id: str,
         embedding_model_id: str,
+        index_name: str,
         run_locally: bool = True,
         use_docs_for_context: bool = True,
-        use_messages_for_context: bool = True,
+        use_messages_for_context: bool = False,
         debug: bool = True
     ):
         super().__init__()
@@ -90,7 +91,7 @@ class LangChainModel():
             input_variables=['question', 'context']
         )
         self.llm_chain = LLMChain(prompt=prompt, llm=llm_model)
-        self.knowledge_index = FAISS.load_local("./index", embedding_model)
+        self.knowledge_index = FAISS.load_local(f"./{index_name}", embedding_model)
 
 
     def get_answer(self, question: str, messages_context: str = '') -> str:
