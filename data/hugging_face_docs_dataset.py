@@ -41,9 +41,10 @@ def extract_markdown_from_directories():
         with open(file, 'r') as f:
             data = f.read()
         docs_path = "datasets/huggingface_docs/"
+        if not os.path.exists(docs_path):
+            os.makedirs(docs_path)
         with open(docs_path + file.split("/")[-1], 'w') as f:
             f.write(data)
-            
 
 
 def markdown_cleaner(data: str):
