@@ -4,7 +4,7 @@ from typing import Mapping, Optional, List, Any
 from langchain import PromptTemplate, HuggingFaceHub, LLMChain
 from langchain.llms import OpenAI, HuggingFacePipeline
 from langchain.llms.base import LLM
-from langchain.embeddings import HuggingFaceEmbeddings, HuggingFaceHubEmbeddings
+from langchain.embeddings import HuggingFaceEmbeddings, HuggingFaceHubEmbeddings, HuggingFaceInstructEmbeddings
 from langchain.vectorstores import FAISS
 from bot.logger import logger
 
@@ -76,7 +76,14 @@ class LangChainModel():
                     task='text2text-generation',
                     model_kwargs=self.model_kwargs
                 )
-            embedding_model = HuggingFaceEmbeddings(model_name=embedding_model_id)
+            # embedding_model = HuggingFaceEmbeddings(model_name=embedding_model_id)
+            embed_instruction = "Represent the Hugging Face library documentation"
+            query_instruction = "Query the most relevant piece of information from the Hugging Face documentation"
+            embedding_model = HuggingFaceInstructEmbeddings(
+                model_name=embedding_model_id,
+                embed_instruction=embed_instruction,
+                query_instruction=query_instruction
+            )
         else:
             logger.info('running models on huggingface hub')
             llm_model = HuggingFaceHub(
@@ -102,13 +109,15 @@ class LangChainModel():
         if self.use_docs_for_context:
             relevant_docs = self.knowledge_index.similarity_search(
                 query=question,
-                k=1
+                k=3
             )
-            context += '\nRETRIEVED DOCUMENTS THAT MAY CONTAIN INFO RELEVANT TO QUESTION:'
+            # context += '\nRETRIEVED DOCUMENTS THAT MAY CONTAIN INFO RELEVANT TO QUESTION:'
+            context += 'CONTEXT: '
             context += "".join([doc.page_content for doc in relevant_docs])
+        question = 'ANSWER THIS QUESTION USING CONTEXT: ' + question
         response = self.llm_chain.run(question=question, context=context)
         if self.debug:
-            sep = '\n' + '-' * 50
+            sep = '\n' + '-' * 100
             logger.info(sep)
             logger.info(f'messages_contex: {messages_context} {sep}')
             logger.info(f'relevant_docs: {relevant_docs} {sep}')
