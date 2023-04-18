@@ -51,7 +51,7 @@ class LangChainModel():
         index_name: str,
         run_locally: bool = True,
         use_docs_for_context: bool = True,
-        use_messages_for_context: bool = False,
+        use_messages_for_context: bool = True,
         debug: bool = True
     ):
         super().__init__()
@@ -92,9 +92,12 @@ class LangChainModel():
             )
             embedding_model = HuggingFaceHubEmbeddings(repo_id=embedding_model_id)
 
-        template = 'BEGINNING OF CONTEXT {context} END OF CONTEXT \n QUESTION: {question}'
+        prompt_template = \
+            "### Instruction:\nGive an answer that contains all the necessary information for the question.\n" \
+            "{context}\n### Input:\n{question}\n### Response:"
+
         prompt = PromptTemplate(
-            template=template,
+            template=prompt_template,
             input_variables=['question', 'context']
         )
         self.llm_chain = LLMChain(prompt=prompt, llm=llm_model)
@@ -102,19 +105,18 @@ class LangChainModel():
 
 
     def get_answer(self, question: str, messages_context: str = '') -> str:
-        context = ''
+        context = 'Give an answer that contains all the necessary information for the question.\n'
         relevant_docs = ''
-        if self.use_messages_for_context:
-            context += 'MESSAGES CONTEXT:\n' + messages_context
+        if self.use_messages_for_context and messages_context:
+            messages_context = f'\nPrevious questions and answers:\n{messages_context}'
+            context += messages_context
         if self.use_docs_for_context:
             relevant_docs = self.knowledge_index.similarity_search(
-                query=question,
+                query=messages_context+question,
                 k=3
             )
-            # context += '\nRETRIEVED DOCUMENTS THAT MAY CONTAIN INFO RELEVANT TO QUESTION:'
-            context += 'CONTEXT: '
+            context += '\nExtracted documents:\n'
             context += "".join([doc.page_content for doc in relevant_docs])
-        question = 'ANSWER THIS QUESTION USING CONTEXT: ' + question
         response = self.llm_chain.run(question=question, context=context)
         if self.debug:
             sep = '\n' + '-' * 100
