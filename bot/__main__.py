@@ -7,11 +7,15 @@ from bot.question_answering import LangChainModel
 def main():
     logger.info('Starting Application...')
     config = Config()
+    logger.info(config.asdict())
     model = LangChainModel(
         llm_model_id=config.question_answering_model_id,
         embedding_model_id=config.embedding_model_id,
         index_name=config.index_name,
-        run_locally=config.run_locally
+        run_locally=config.run_locally,
+        use_docs_for_context=config.use_docs_in_context,
+        use_messages_for_context=config.use_messages_in_context,
+        debug=False
     )
     client = DiscordClient(
         model=model,

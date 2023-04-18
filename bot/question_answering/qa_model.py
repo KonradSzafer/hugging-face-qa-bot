@@ -52,7 +52,7 @@ class LangChainModel():
         run_locally: bool = True,
         use_docs_for_context: bool = True,
         use_messages_for_context: bool = True,
-        debug: bool = True
+        debug: bool = False
     ):
         super().__init__()
         self.use_docs_for_context = use_docs_for_context
