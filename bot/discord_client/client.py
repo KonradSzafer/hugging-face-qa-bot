@@ -20,17 +20,17 @@ class DiscordClient(discord.Client):
         self.num_last_messages: int = num_last_messages
         self.use_names_in_context: bool = use_names_in_context
         self.enable_commands: bool = enable_commands
-        self.max_message_len = 2000
+        self.max_message_len: int = 2000
 
-    def _set_initial_prompt(self) -> None:
+    def _set_system_prompt(self) -> None:
         name = str(self.user).split('#')[0]
-        self.initial_prompt: str = \
-            f'your name is: {name}\n'
+        self.system_prompt: str = '' #\
+            # f'your name is: {name}\n'
 
     async def on_ready(self):
         logger.info('Successfully logged in as: {0.user}'.format(self))
         await self.change_presence(activity=discord.Game(name='Chatting...'))
-        self._set_initial_prompt()
+        self._set_system_prompt()
 
     async def on_message(self, message):
         if message.author == self.user:
@@ -49,7 +49,7 @@ class DiscordClient(discord.Client):
                 last_messages.append(msg.content)
         last_messages.reverse()
         last_messages.pop() # remove last message from context
-        context = self.initial_prompt + '\n'
+        context = self.system_prompt + '\n'
         context += '\n'.join(last_messages)
 
         logger.info('Received message: {0.content}'.format(message))
