@@ -1,6 +1,7 @@
 import os
 from dataclasses import dataclass, asdict
 from typing import Dict, Union
+from bot.logger import logger
 
 
 def get_env(env_name: str, default = None) -> str:
@@ -37,3 +38,8 @@ class Config:
 
     def asdict(self) -> Dict:
         return asdict(self)
+
+    def log(self) -> None:
+        logger.info('Config:')
+        for key, value in self.asdict().items():
+            logger.info(f'{key}: {value}')

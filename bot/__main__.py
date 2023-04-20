@@ -7,7 +7,7 @@ from bot.question_answering import LangChainModel
 def main():
     logger.info('Starting Application...')
     config = Config()
-    logger.info(config.asdict())
+    config.log()
     model = LangChainModel(
         llm_model_id=config.question_answering_model_id,
         embedding_model_id=config.embedding_model_id,
