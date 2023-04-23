@@ -67,16 +67,15 @@ class LangChainModel():
         if run_locally:
             logger.info('running models locally')
             if 'local_models/' in llm_model_id:
-                llm_model = LocalBinaryModel(
+                self.llm_model = LocalBinaryModel(
                     model_id=llm_model_id
                 )
             else:
-                llm_model = HuggingFacePipeline.from_model_id(
+                self.llm_model = HuggingFacePipeline.from_model_id(
                     model_id=llm_model_id,
                     task='text2text-generation',
                     model_kwargs=self.model_kwargs
                 )
-            # embedding_model = HuggingFaceEmbeddings(model_name=embedding_model_id)
             embed_instruction = "Represent the Hugging Face library documentation"
             query_instruction = "Query the most relevant piece of information from the Hugging Face documentation"
             embedding_model = HuggingFaceInstructEmbeddings(
@@ -86,21 +85,23 @@ class LangChainModel():
             )
         else:
             logger.info('running models on huggingface hub')
-            llm_model = HuggingFaceHub(
+            self.llm_model = HuggingFaceHub(
                 repo_id=llm_model_id,
                 model_kwargs=self.model_kwargs
             )
             embedding_model = HuggingFaceHubEmbeddings(repo_id=embedding_model_id)
 
         prompt_template = \
-            "### Instruction:\nGive an answer that contains all the necessary information for the question.\n" \
+            "### Instruction:\n" \
+            "Give an answer that contains all the necessary information for the question.\n" \
+            "If the context contains necessary information to answer question, use it to generate an appropriate response.\n" \
             "{context}\n### Input:\n{question}\n### Response:"
 
         prompt = PromptTemplate(
             template=prompt_template,
             input_variables=['question', 'context']
         )
-        self.llm_chain = LLMChain(prompt=prompt, llm=llm_model)
+        self.llm_chain = LLMChain(prompt=prompt, llm=self.llm_model)
         self.knowledge_index = FAISS.load_local(f"./{index_name}", embedding_model)
 
 

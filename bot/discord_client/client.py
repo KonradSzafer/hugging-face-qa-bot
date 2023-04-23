@@ -16,6 +16,10 @@ class DiscordClient(discord.Client):
         intents = discord.Intents.all()
         intents.message_content = True
         super().__init__(intents=intents, command_prefix='!')
+
+        assert num_last_messages >= 1, \
+            'The number of last messages in context should be at least 1'
+
         self.model = model
         self.num_last_messages: int = num_last_messages
         self.use_names_in_context: bool = use_names_in_context
