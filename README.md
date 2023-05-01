@@ -4,13 +4,14 @@ This repository aims to develop a Hugging Face question answering bot that helps
 
 # Table of Contents
 - [Running bot](#running-bot)
+    - [Running in a Docker](#running-in-a-docker)
+    - [Running in a Python](#running-in-a-python)
+- [Development instructions](#development-instructions)
 - [Datasets](#dataset-list)
-- [Development instructions](#development-intructions)
 
 ## Running Bot
 
-1. Fill out the `.env` file with the required tokens.
-2. Build and run the Docker container using the following commands:
+### Running in a Docker
 ```bash
 docker build -t <container-name> .
 docker run <container-name>
@@ -18,11 +19,11 @@ docker run <container-name>
 ./run_docker.sh
 ```
 
-## Dataset List
-
-Below is a list of the datasets created during development:
-- [Stack Overflow - Python](https://huggingface.co/datasets/KonradSzafer/stackoverflow_python_preprocessed)
-- [Stack Overflow - Linux](https://huggingface.co/datasets/KonradSzafer/stackoverflow_linux)
+### Running in a Python
+```bash
+pip install -r requirements.txt
+python3 -m bot
+```
 
 ## Development Instructions
 
@@ -41,3 +42,9 @@ To generate the requirements.txt file, run the following command:
 ```bash
 pipreqsnb --force .
 ```
+
+## Dataset List
+
+Below is a list of the datasets created during development:
+- [Stack Overflow - Python](https://huggingface.co/datasets/KonradSzafer/stackoverflow_python_preprocessed)
+- [Stack Overflow - Linux](https://huggingface.co/datasets/KonradSzafer/stackoverflow_linux)

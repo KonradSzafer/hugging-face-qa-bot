@@ -19,7 +19,7 @@ class LocalBinaryModel(LLM):
         self.model_path = f'bot/question_answering/{model_id}'
         if not os.path.exists(self.model_path):
             raise ValueError(f'{self.model_path} does not exist')
-        self.llm = Llama(model_path=self.model_path, n_ctx=2048)
+        self.llm = Llama(model_path=self.model_path, n_ctx=4096)
 
 
     def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
@@ -117,6 +117,8 @@ class LangChainModel():
             )
             context += '\nExtracted documents:\n'
             context += "".join([doc.page_content for doc in relevant_docs])
+        
+        logger.info(f'context len: {len(context)}')
         response = self.llm_chain.run(question=question, context=context)
         if self.debug:
             sep = '\n' + '-' * 100
