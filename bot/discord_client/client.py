@@ -20,7 +20,7 @@ class DiscordClient(discord.Client):
         assert num_last_messages >= 1, \
             'The number of last messages in context should be at least 1'
 
-        self.model = model
+        self.model: LangChainModel = model
         self.num_last_messages: int = num_last_messages
         self.use_names_in_context: bool = use_names_in_context
         self.enable_commands: bool = enable_commands

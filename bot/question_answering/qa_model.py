@@ -6,41 +6,40 @@ from langchain.llms import OpenAI, HuggingFacePipeline
 from langchain.llms.base import LLM
 from langchain.embeddings import HuggingFaceEmbeddings, HuggingFaceHubEmbeddings, HuggingFaceInstructEmbeddings
 from langchain.vectorstores import FAISS
+from llama_cpp import Llama
 from bot.logger import logger
 
 
 class LocalBinaryModel(LLM):
     model_path: str = None
-    executable_file: str = None
+    llm: Llama = None
 
-    def __init__(
-        self,
-        model_id: str = None,
-    ):
+    def __init__(self, model_id: str = None):
         super().__init__()
-        self.model_path = f'bot/question_answering/{model_id[:model_id.rfind("/")]}/'
-        self.executable_file = f'./{model_id.split("/")[-1]}'
+        self.model_path = f'bot/question_answering/{model_id}'
         if not os.path.exists(self.model_path):
             raise ValueError(f'{self.model_path} does not exist')
+        self.llm = Llama(model_path=self.model_path, n_ctx=2048)
+
 
     def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
-        command = [self.executable_file, '-p', prompt]
-        response = subprocess.run(
-            command,
-            cwd=self.model_path,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE
+        prompt = f'Q: {prompt} A: '
+        output = self.llm(
+            prompt,
+            max_tokens=1024,
+            stop=['Q:'],
+            echo=False
         )
-        response = response.stdout.decode('utf-8')
-        return response
+        output_text = output['choices'][0]['text']
+        return output_text
 
     @property
     def _identifying_params(self) -> Mapping[str, Any]:
-        return {"name_of_model": self.model_dir}
+        return {"name_of_model": self.model_path}
 
     @property
     def _llm_type(self) -> str:
-        return self.model_dir
+        return self.model_path
 
 
 class LangChainModel():
