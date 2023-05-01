@@ -6,8 +6,10 @@ This repository focuses on the development of a Hugging Face question answering 
 The Hugging Face Question Answering Bot is designed to help users quickly find solutions to common problems and questions related to Hugging Face libraries. Whether you're just getting started with ML or you're an experienced developer looking for advanced guidance, the bot can help you get the information you need to succeed.
 
 # Examples
-![]()
-
+## Simple question answering about knowledge from documentation
+![Example 1](./images/conv1.png)
+## Chaining questions and providing code snippets
+![Example 2](./images/conv2.png)
 # Table of Contents
 - [Setting up the bot](#setting-up-the-bot)
     - [Running in a Docker](#running-in-a-docker)
