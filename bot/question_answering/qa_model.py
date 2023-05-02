@@ -11,6 +11,20 @@ from bot.logger import logger
 
 
 class LocalBinaryModel(LLM):
+    """
+    Local Binary Model class, used for loading a locally stored Llama model.
+
+    Args:
+        model_id (str): The ID of the model to be loaded.
+
+    Attributes:
+        model_path (str): The path to the model to be loaded.
+        llm (Llama): The Llama object containing the loaded model.
+
+    Raises:
+        ValueError: If the model_path does not exist.
+
+    """
     model_path: str = None
     llm: Llama = None
 
@@ -43,6 +57,32 @@ class LocalBinaryModel(LLM):
 
 
 class LangChainModel():
+    """
+    LangChainModel class, used for generating answers to questions.
+
+    Args:
+        llm_model_id (str): The ID of the LLM model to be used.
+        embedding_model_id (str): The ID of the embedding model to be used.
+        index_name (str): The name of the FAISS index to be used.
+        run_locally (bool, optional): Whether to run the models locally or on the Hugging Face hub. Defaults to True.
+        use_docs_for_context (bool, optional): Whether to use relevant documents as context for generating answers.
+        Defaults to True.
+        use_messages_for_context (bool, optional): Whether to use previous messages as context for generating answers.
+        Defaults to True.
+        debug (bool, optional): Whether to log debug information. Defaults to False.
+
+    Attributes:
+        use_docs_for_context (bool): Whether to use relevant documents as context for generating answers.
+        use_messages_for_context (bool): Whether to use previous messages as context for generating answers.
+        debug (bool): Whether to log debug information.
+        model_kwargs (Dict[str, Any]): The model keyword arguments to be used.
+        llm_model (Union[LocalBinaryModel, HuggingFacePipeline, HuggingFaceHub]): The LLM model to be used.
+        embedding_model (Union[HuggingFaceInstructEmbeddings, HuggingFaceHubEmbeddings]): The embedding model to be used.
+        prompt_template (PromptTemplate): The prompt template to be used.
+        llm_chain (LLMChain): The LLM chain to be used.
+        knowledge_index (FAISS): The FAISS index to be used.
+
+    """
     def __init__(
         self,
         llm_model_id: str,
@@ -105,6 +145,16 @@ class LangChainModel():
 
 
     def get_answer(self, question: str, messages_context: str = '') -> str:
+        """
+        Generate an answer to the specified question.
+
+        Args:
+            question (str): The question to be answered.
+            messages_context (str, optional): The context to be used for generating the answer. Defaults to ''.
+
+        Returns:
+            str: The generated answer.
+        """
         context = 'Give an answer that contains all the necessary information for the question.\n'
         relevant_docs = ''
         if self.use_messages_for_context and messages_context:
