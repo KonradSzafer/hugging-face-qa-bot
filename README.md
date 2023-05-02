@@ -31,7 +31,7 @@ First, you need to provide the necessary environmental variables and API keys in
 - `ENABLE_COMMANDS` - allow command, e.g. channel cleanup
 - `RUN_LOCALY` - run inference locally
 
-If you decide that you want to **run everthing locally** our current MVP recommends using Instructor large and Alpaca 7B with 4-bit quatization models. For this to properly work, you need to put the weights of the model in the `/bot/question_answering/` and set the `QUESTION_ANSWERING_MODEL_ID` variable to the name of the file that you just put in the aforementioned folder. Now, you should be able to run your o
+If you decide that you want to **run everthing locally** our current MVP recommends using Instructor large and Alpaca 7B with 4-bit quatization models. For this to properly work, you need to put the weights of the model in the `/bot/question_answering/` and set the `QUESTION_ANSWERING_MODEL_ID` variable to the name of the file that you just put in the aforementioned folder. Now, you should be able to run your own, local instance of the bot.
 
 ### Running in a Docker
 ```bash
