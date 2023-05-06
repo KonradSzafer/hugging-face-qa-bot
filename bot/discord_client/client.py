@@ -26,15 +26,9 @@ class DiscordClient(discord.Client):
         self.enable_commands: bool = enable_commands
         self.max_message_len: int = 2000
 
-    def _set_system_prompt(self) -> None:
-        name = str(self.user).split('#')[0]
-        self.system_prompt: str = '' #\
-            # f'your name is: {name}\n'
-
     async def on_ready(self):
         logger.info('Successfully logged in as: {0.user}'.format(self))
         await self.change_presence(activity=discord.Game(name='Chatting...'))
-        self._set_system_prompt()
 
     async def on_message(self, message):
         if message.author == self.user:
@@ -53,8 +47,7 @@ class DiscordClient(discord.Client):
                 last_messages.append(msg.content)
         last_messages.reverse()
         last_messages.pop() # remove last message from context
-        context = self.system_prompt + '\n'
-        context += '\n'.join(last_messages)
+        context = '\n'.join(last_messages)
 
         logger.info('Received message: {0.content}'.format(message))
         response = self.model.get_answer(message.content, context)

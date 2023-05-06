@@ -14,6 +14,7 @@ def main():
         index_name=config.index_name,
         run_locally=config.run_locally,
         use_docs_for_context=config.use_docs_in_context,
+        add_sources_to_response=config.add_sources_to_response,
         use_messages_for_context=config.use_messages_in_context,
         debug=False
     )
