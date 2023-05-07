@@ -8,30 +8,36 @@ from markdown import markdown
 import pandas as pd
 
 
-def download_repositories(repositories_dir: str):
+def download_repositories(repo_urls_file: str, repo_dir: str):
     """
     Download the Hugging Face repositories.
     """
-    if not os.path.exists(repositories_dir):
-        os.makedirs(repositories_dir)
-    with open("./datasets/hf_repositories_urls.json", "r") as f:
+    if not os.path.exists(repo_dir):
+        os.makedirs(repo_dir)
+    with open(repo_urls_file, "r") as f:
         repositories_urls = json.load(f)["urls"]
         for url in repositories_urls:
             try:
-                subprocess.run(["git", "clone", url], cwd=repositories_dir)
+                subprocess.run(["git", "clone", url], cwd=repo_dir)
             except subprocess.CalledProcessError as e:
                 print("Command failed with error:", e.stderr)
 
 
-def extract_markdown_from_directories(repositories_dir: str, documents_dir: str):
+def extract_markdown_from_directories(repo_urls_file: str, repo_dir: str, docs_dir: str):
     """
-    Extract markdown from the Hugging Face repositories.
+    This function reads markdown and markdownx files from the repositories directory,
+    filters out non-English files, and adds the source GitHub URL as the first line of each file.
+    The resulting files are saved in the docs_dir.
     """
     languages = pd.read_csv("language-codes.csv").loc[:,"alpha2"].tolist()
     languages.remove("en")
 
-    files = glob.glob(repositories_dir + "**/*.md", recursive=True)
-    files += glob.glob(repositories_dir + "**/*.mdx", recursive=True)
+    files = glob.glob(repo_dir + "**/*.md", recursive=True)
+    files += glob.glob(repo_dir + "**/*.mdx", recursive=True)
+
+    repo_urls = []
+    with open(repo_urls_file, "r") as f:
+        repo_urls = json.load(f)["urls"]
 
     # filter out the files that are not in english
     filtered_files = []
@@ -43,14 +49,28 @@ def extract_markdown_from_directories(repositories_dir: str, documents_dir: str)
         else:
             filtered_files.append(filename)
 
+    # generate a GitHub URL for a file based on its name and a list of possible repository URLs.
+    def get_github_url(filename: str, repo_urls: str, repo_dir: str):
+        source = filename.replace(repo_dir, '')
+        repo_name, file_path = source.split('/', 1)
+        repo_url_prefix = None
+        for repo_url in repo_urls:
+            if repo_name in repo_url:
+                repo_url_prefix = repo_url
+        if not repo_url_prefix:
+            raise ValueError(f"Repo URL not found for {repo_name}")
+        url = f'{repo_url_prefix}/blob/main/{file_path}' 
+        return url
+
     # copy the files with the source added in the first line
-    if not os.path.exists(documents_dir):
-        os.makedirs(documents_dir)
+    if not os.path.exists(docs_dir):
+        os.makedirs(docs_dir)
     for filename in filtered_files:
-        data = f"source: {filename.replace(repositories_dir, '')}\n\n"
+        source_url = get_github_url(filename, repo_urls, repo_dir)
+        data = f"source: {source_url}\n\n"
         with open(filename, 'r') as f:
             data += f.read()
-        with open(documents_dir + filename.split("/")[-1], 'w') as f:
+        with open(docs_dir + filename.split("/")[-1], 'w') as f:
             f.write(data)
 
 
@@ -75,7 +95,8 @@ def markdown_cleaner(data: str):
 
 
 if __name__ == '__main__':
-    repositories_dir = "./datasets/huggingface_repositories/"
-    documents_dir = "./datasets/huggingface_docs/"
-    download_repositories(repositories_dir)
-    extract_markdown_from_directories(repositories_dir, documents_dir)
+    repo_urls_file = "./datasets/hf_repositories_urls.json"
+    repo_dir = "./datasets/huggingface_repositories/"
+    docs_dir = "./datasets/huggingface_docs/"
+    download_repositories(repo_urls_file, repo_dir)
+    extract_markdown_from_directories(repo_urls_file, repo_dir, docs_dir)
