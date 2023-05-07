@@ -90,11 +90,13 @@ class LangChainModel():
         index_name: str,
         run_locally: bool = True,
         use_docs_for_context: bool = True,
+        add_sources_to_response: bool = True,
         use_messages_for_context: bool = True,
         debug: bool = False
     ):
         super().__init__()
         self.use_docs_for_context = use_docs_for_context
+        self.add_sources_to_response = add_sources_to_response
         self.use_messages_for_context = use_messages_for_context
         self.debug = debug
         self.model_kwargs = {
@@ -157,6 +159,7 @@ class LangChainModel():
         """
         context = 'Give an answer that contains all the necessary information for the question.\n'
         relevant_docs = ''
+        sources = []
         if self.use_messages_for_context and messages_context:
             messages_context = f'\nPrevious questions and answers:\n{messages_context}'
             context += messages_context
@@ -167,14 +170,24 @@ class LangChainModel():
             )
             context += '\nExtracted documents:\n'
             context += "".join([doc.page_content for doc in relevant_docs])
-        
-        logger.info(f'context len: {len(context)}')
+            metadata = [doc.metadata for doc in relevant_docs]
+            sources += list(set([str(m['source']) for m in metadata]))
+
         response = self.llm_chain.run(question=question, context=context)
+        if self.add_sources_to_response:
+            response += '\n\nSources:'
+            for i, (source) in enumerate(sources):
+                logger.info(source)
+                response += f'\n [{i+1}] {source}'
+
         if self.debug:
             sep = '\n' + '-' * 100
             logger.info(sep)
             logger.info(f'messages_contex: {messages_context} {sep}')
             logger.info(f'relevant_docs: {relevant_docs} {sep}')
+            sources_str = '\n'.join(sources)
+            logger.info(f"sources:\n{sources_str}")
+            logger.info(f'context len: {len(context)}')
             logger.info(f'context: {context} {sep}')
             logger.info(f'question: {question} {sep}')
             logger.info(f'response: {response} {sep}')

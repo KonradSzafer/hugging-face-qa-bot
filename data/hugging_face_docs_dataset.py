@@ -1,21 +1,20 @@
-import os
 import glob
 import json
-import subprocess
-import pandas as pd
+import os
 import re
+import subprocess
 from bs4 import BeautifulSoup
 from markdown import markdown
+import pandas as pd
 
 
-def download_repositories():
+def download_repositories(repositories_dir: str):
     """
     Download the Hugging Face repositories.
     """
-    repositories_dir = "datasets/huggingface_repositories"
     if not os.path.exists(repositories_dir):
         os.makedirs(repositories_dir)
-    with open("datasets/hf_repositories_urls.json", "r") as f:
+    with open("./datasets/hf_repositories_urls.json", "r") as f:
         repositories_urls = json.load(f)["urls"]
         for url in repositories_urls:
             try:
@@ -24,32 +23,34 @@ def download_repositories():
                 print("Command failed with error:", e.stderr)
 
 
-def extract_markdown_from_directories():
+def extract_markdown_from_directories(repositories_dir: str, documents_dir: str):
     """
     Extract markdown from the Hugging Face repositories.
     """
     languages = pd.read_csv("language-codes.csv").loc[:,"alpha2"].tolist()
     languages.remove("en")
 
-    files = glob.glob('./datasets/huggingface_repositories/**/*.md', recursive=True) + glob.glob('**/*.mdx', recursive=True)
-    filtered_files = []
+    files = glob.glob(repositories_dir + "**/*.md", recursive=True)
+    files += glob.glob(repositories_dir + "**/*.mdx", recursive=True)
 
-    for file in files:
-        sep_file = file.split('/')
+    # filter out the files that are not in english
+    filtered_files = []
+    for filename in files:
+        sep_file = filename.split("/")
         for seq in sep_file:
             if seq in languages:
                 break
         else:
-            filtered_files.append(file)
-    # copy the files to /datasets/huggingface_docs/hf_filtered
-    for file in filtered_files:
-        data = ""
-        with open(file, 'r') as f:
-            data = f.read()
-        docs_path = "datasets/huggingface_docs/"
-        if not os.path.exists(docs_path):
-            os.makedirs(docs_path)
-        with open(docs_path + file.split("/")[-1], 'w') as f:
+            filtered_files.append(filename)
+
+    # copy the files with the source added in the first line
+    if not os.path.exists(documents_dir):
+        os.makedirs(documents_dir)
+    for filename in filtered_files:
+        data = f"source: {filename.replace(repositories_dir, '')}\n\n"
+        with open(filename, 'r') as f:
+            data += f.read()
+        with open(documents_dir + filename.split("/")[-1], 'w') as f:
             f.write(data)
 
 
@@ -74,5 +75,7 @@ def markdown_cleaner(data: str):
 
 
 if __name__ == '__main__':
-    download_repositories()
-    extract_markdown_from_directories()
+    repositories_dir = "./datasets/huggingface_repositories/"
+    documents_dir = "./datasets/huggingface_docs/"
+    download_repositories(repositories_dir)
+    extract_markdown_from_directories(repositories_dir, documents_dir)

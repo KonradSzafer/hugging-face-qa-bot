@@ -69,11 +69,17 @@ class Config:
     embedding_model_id: str = get_env('EMBEDDING_MODEL_ID')
     index_name: str = get_env('INDEX_NAME')
     use_docs_in_context: bool = to_bool(get_env('USE_DOCS_IN_CONTEXT', True))
+    add_sources_to_response: bool = to_bool(get_env('ADD_SOURCES_TO_RESPONSE', True))
     use_messages_in_context: bool = to_bool(get_env('USE_MESSEGES_IN_CONTEXT', True))
     num_last_messages: int = int(get_env('NUM_LAST_MESSAGES', 2))
     use_names_in_context: bool = to_bool(get_env('USE_NAMES_IN_CONTEXT', False))
     enable_commands: bool = to_bool(get_env('ENABLE_COMMANDS', True))
     run_locally: bool = to_bool(get_env('RUN_LOCALLY', True))
+
+    def __post_init__(self):
+        # validate config
+        if not self.use_docs_in_context and self.add_sources_to_response:
+            raise ValueError('Cannot add sources to response if not using docs in context')
 
     def asdict(self) -> Dict:
         return asdict(self)
