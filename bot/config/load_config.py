@@ -5,6 +5,16 @@ from bot.logger import logger
 
 
 def get_env(env_name: str, default = None) -> str:
+    """
+    Retrieve an environment variable.
+
+    Args:
+        env_name (str): The name of the environment variable.
+        default (optional): The default value to return if the environment variable is not found. Defaults to None.
+
+    Returns:
+        str: The value of the environment variable.
+    """
     env = os.getenv(env_name)
     if not env:
         if default:
@@ -15,6 +25,15 @@ def get_env(env_name: str, default = None) -> str:
         return env
 
 def to_bool(variable: str) -> bool:
+    """
+    Convert a string to a boolean.
+
+    Args:
+        variable (str): The string to be converted.
+
+    Returns:
+        bool: The boolean value of the string.
+    """
     if variable.lower() in ['true', '1']:
         return True
     elif variable.lower() in ['false', '0']:
@@ -24,6 +43,26 @@ def to_bool(variable: str) -> bool:
 
 @dataclass
 class Config:
+    """
+    Configuration class, used for setting up the application.
+
+    Attributes:
+        huggingface_token (str): The Hugging Face API token.
+        discord_token (str): The Discord API token.
+        question_answering_model_id (str): The ID of the question answering model to be used.
+        embedding_model_id (str): The ID of the embedding model to be used.
+        index_name (str): The name of the FAISS index to be used.
+        use_docs_in_context (bool): Whether to use relevant documents as context for generating answers.
+        use_messages_in_context (bool): Whether to use previous messages as context for generating answers.
+        num_last_messages (int): The number of previous messages to use as context for generating answers.
+        use_names_in_context (bool): Whether to include user names in the message context.
+        enable_commands (bool): Whether to enable commands for the bot.
+        run_locally (bool): Whether to run the application locally or on the Hugging Face hub.
+
+    Methods:
+        asdict(self) -> Dict: Return the configuration as a dictionary.
+        log(self) -> None: Log the configuration.
+    """
     huggingface_token: str = get_env('HUGGINGFACEHUB_API_TOKEN')
     discord_token: str = get_env('DISCORD_TOKEN')
     question_answering_model_id: str = get_env('QUESTION_ANSWERING_MODEL_ID')

@@ -5,6 +5,25 @@ from bot.question_answering import LangChainModel
 
 
 class DiscordClient(discord.Client):
+    """
+    Discord Client class, used for interacting with a Discord server.
+
+    Args:
+        model (LangChainModel): The LangChainModel to be used for generating answers.
+        num_last_messages (int, optional): The number of previous messages to use as context for generating answers.
+        Defaults to 5.
+        use_names_in_context (bool, optional): Whether to include user names in the message context. Defaults to True.
+        enable_commands (bool, optional): Whether to enable commands for the bot. Defaults to True.
+
+    Attributes:
+        model (LangChainModel): The LangChainModel to be used for generating answers.
+        num_last_messages (int): The number of previous messages to use as context for generating answers.
+        use_names_in_context (bool): Whether to include user names in the message context.
+        enable_commands (bool): Whether to enable commands for the bot.
+        max_message_len (int): The maximum length of a message.
+        system_prompt (str): The system prompt to be used.
+
+    """
     def __init__(
         self,
         model: LangChainModel,
@@ -27,10 +46,19 @@ class DiscordClient(discord.Client):
         self.max_message_len: int = 2000
 
     async def on_ready(self):
+        """
+        Callback function to be called when the client is ready.
+        """
         logger.info('Successfully logged in as: {0.user}'.format(self))
         await self.change_presence(activity=discord.Game(name='Chatting...'))
 
     async def on_message(self, message):
+        """
+        Callback function to be called when a message is received.
+
+        Args:
+            message (discord.Message): The received message.
+        """
         if message.author == self.user:
             return
         if self.enable_commands and message.content.startswith('!'):

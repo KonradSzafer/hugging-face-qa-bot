@@ -4,6 +4,12 @@ from bs4 import BeautifulSoup
 
 
 def preprocess_dataset():
+    """
+    Preprocesses the 'koutch/stackoverflow_python' dataset.
+
+    Returns:
+        datasets.arrow_dataset.Dataset: The preprocessed dataset.
+    """
     dataset = load_dataset('koutch/stackoverflow_python', split='train')
     dataset = dataset.filter(
         lambda example:
@@ -31,6 +37,12 @@ def preprocess_dataset():
 
 
 def show_info(dataset):
+    """
+    Print information about the dataset.
+
+    Args:
+        dataset (datasets.arrow_dataset.Dataset): The dataset.
+    """
     print(dataset.info, '\n')
     print(f'dataset len: {len(dataset)}')
     print(f"example question: {dataset[0]['question']}")

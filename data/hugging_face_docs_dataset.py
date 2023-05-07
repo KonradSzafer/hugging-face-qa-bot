@@ -9,6 +9,9 @@ import pandas as pd
 
 
 def download_repositories(repositories_dir: str):
+    """
+    Download the Hugging Face repositories.
+    """
     if not os.path.exists(repositories_dir):
         os.makedirs(repositories_dir)
     with open("./datasets/hf_repositories_urls.json", "r") as f:
@@ -21,6 +24,9 @@ def download_repositories(repositories_dir: str):
 
 
 def extract_markdown_from_directories(repositories_dir: str, documents_dir: str):
+    """
+    Extract markdown from the Hugging Face repositories.
+    """
     languages = pd.read_csv("language-codes.csv").loc[:,"alpha2"].tolist()
     languages.remove("en")
 
@@ -49,6 +55,15 @@ def extract_markdown_from_directories(repositories_dir: str, documents_dir: str)
 
 
 def markdown_cleaner(data: str):
+    """
+    Clean markdown text.
+
+    Args:
+        data (str): The markdown text to be cleaned.
+
+    Returns:
+        str: The cleaned markdown text.
+    """
     soupped = BeautifulSoup(markdown(data), "html.parser")
     raw_text = ''.join(soupped.findAll(string=True))
     clean_text = re.sub(r"<!--.*?-->", "", raw_text, flags=re.DOTALL)
