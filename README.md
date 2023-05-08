@@ -23,6 +23,7 @@ First, you need to provide the necessary environmental variables and API keys in
 - `EMBEDDING_MODEL_ID` - an ID of embedding model, used to create and query index on the documents
 - `INDEX_NAME` - directory where the index files are present after creation
 - `USE_DOCS_IN_CONTEXT` - allow context extration from documents
+- `ADD_SOURCES_TO_RESPONSE` - show references to documents that were used as a context for a given query
 - `USE_MESSEGES_IN_CONTEXT` - allow to use chat history for conversational experience
 - `NUM_LAST_MESSAGES` - number of messages used for the previous feature
 - `USE_NAMES_IN_CONTEXT` - use names of users in context
