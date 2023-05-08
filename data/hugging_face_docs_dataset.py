@@ -34,6 +34,7 @@ def extract_markdown_from_directories(repo_urls_file: str, repo_dir: str, docs_d
 
     files = glob.glob(repo_dir + "**/*.md", recursive=True)
     files += glob.glob(repo_dir + "**/*.mdx", recursive=True)
+    print(f'Found {len(files)} md/mdx files')
 
     repo_urls = []
     with open(repo_urls_file, "r") as f:
@@ -48,9 +49,10 @@ def extract_markdown_from_directories(repo_urls_file: str, repo_dir: str, docs_d
                 break
         else:
             filtered_files.append(filename)
+    print(f'Found {len(filtered_files)} md/mdx files in English')
 
-    # generate a GitHub URL for a file based on its name and a list of possible repository URLs.
-    def get_github_url(filename: str, repo_urls: str, repo_dir: str):
+    # generate a GitHub URL for a file based on its name and a list of possible repository URLs
+    def get_github_url(filename: str, repo_urls: str, repo_dir: str) -> str:
         source = filename.replace(repo_dir, '')
         repo_name, file_path = source.split('/', 1)
         repo_url_prefix = None
@@ -62,16 +64,30 @@ def extract_markdown_from_directories(repo_urls_file: str, repo_dir: str, docs_d
         url = f'{repo_url_prefix}/blob/main/{file_path}' 
         return url
 
+    # creates a valid filename by replacing certain characters and removing the repo_dir path
+    def create_filename_from_path(filename: str, repo_dir: str) -> str:
+        filename = filename.replace(repo_dir, '')
+        chars_to_replace = ['/', '{', '}', '-', '.']
+        filename = ''.join(['_' if c in chars_to_replace else c for c in filename])
+        return filename
+
     # copy the files with the source added in the first line
     if not os.path.exists(docs_dir):
         os.makedirs(docs_dir)
+    copied_files = []
     for filename in filtered_files:
         source_url = get_github_url(filename, repo_urls, repo_dir)
         data = f"source: {source_url}\n\n"
         with open(filename, 'r') as f:
             data += f.read()
-        with open(docs_dir + filename.split("/")[-1], 'w') as f:
+        output_filename = docs_dir + create_filename_from_path(filename, repo_dir)
+        with open(output_filename, 'w') as f:
             f.write(data)
+        if not os.path.isfile(output_filename):
+            raise ValueError(f"Failed to create the output file: {output_filename}")
+        copied_files.append(output_filename)
+
+    print(f'Successfully copied {len(set(copied_files))} unique files')
 
 
 def markdown_cleaner(data: str):
