@@ -1,16 +1,18 @@
 FROM ubuntu:latest
 
-RUN apt -y update && apt -y upgrade
-RUN apt -y install git
-RUN apt -y install python3.10 python3-pip
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get -y update && \
+    apt-get -y upgrade && \
+    apt-get -y install git python3.10 python3-pip
 
 COPY requirements.txt .
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
+WORKDIR /hugging-face-qa-bot
 COPY .env .
-COPY ./index/index.faiss ./index/index.faiss
-COPY ./index/index.pkl ./index/index.pkl
+COPY index/ index/
 COPY bot/ bot/
 
 ENTRYPOINT [ "python3", "-m", "bot" ]
