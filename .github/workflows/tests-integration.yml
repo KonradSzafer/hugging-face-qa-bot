@@ -30,7 +30,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python3 -m pip install --no-cache-dir -r requirements.txt
+          pip install --no-cache-dir -r requirements.txt
       - name: Run unit tests
         run: |
           pytest -o "testpaths=tests" --noconftest
