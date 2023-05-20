@@ -15,3 +15,4 @@ faiss_cpu==1.7.3
 tqdm==4.64.1
 transformers==4.27.4
 wandb==0.15.0
+pytest==7.3.1
