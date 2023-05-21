@@ -50,6 +50,7 @@ fr,French
 fy,Western Frisian
 ga,Irish
 gd,Gaelic; Scottish Gaelic
+gj,Gujarati
 gl,Galician
 gn,Guarani
 gu,Gujarati
@@ -181,5 +182,7 @@ xh,Xhosa
 yi,Yiddish
 yo,Yoruba
 za,Zhuang; Chuang
-zh,Chinese
+zh,Chinese; General
+zh-CN,Chinese; Simplified
+zh-TW,Chinese; Traditional
 zu,Zulu
