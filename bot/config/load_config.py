@@ -75,6 +75,7 @@ class Config:
     use_names_in_context: bool = to_bool(get_env('USE_NAMES_IN_CONTEXT', False))
     enable_commands: bool = to_bool(get_env('ENABLE_COMMANDS', True))
     run_locally: bool = to_bool(get_env('RUN_LOCALLY', True))
+    debug: bool = to_bool(get_env('DEBUG', True))
 
     def __post_init__(self):
         # validate config
