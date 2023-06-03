@@ -7,7 +7,9 @@ from langchain.llms.base import LLM
 from langchain.embeddings import HuggingFaceEmbeddings, HuggingFaceHubEmbeddings, HuggingFaceInstructEmbeddings
 from langchain.vectorstores import FAISS
 from llama_cpp import Llama
+
 from bot.logger import logger
+from bot.question_answering.response import Response
 
 
 class LocalBinaryModel(LLM):
@@ -146,7 +148,7 @@ class LangChainModel():
         self.knowledge_index = FAISS.load_local(f"./{index_name}", embedding_model)
 
 
-    def get_answer(self, question: str, messages_context: str = '') -> str:
+    def get_answer(self, question: str, messages_context: str = '') -> Response:
         """
         Generate an answer to the specified question.
 
@@ -155,11 +157,13 @@ class LangChainModel():
             messages_context (str, optional): The context to be used for generating the answer. Defaults to ''.
 
         Returns:
-            str: The generated answer.
+            response (Response): The Response object containing the generated answer and the sources of information 
+            used to generate the response.
         """
+
+        response = Response()
         context = 'Give an answer that contains all the necessary information for the question.\n'
         relevant_docs = ''
-        sources = []
         if self.use_messages_for_context and messages_context:
             messages_context = f'\nPrevious questions and answers:\n{messages_context}'
             context += messages_context
@@ -171,24 +175,20 @@ class LangChainModel():
             context += '\nExtracted documents:\n'
             context += "".join([doc.page_content for doc in relevant_docs])
             metadata = [doc.metadata for doc in relevant_docs]
-            sources += list(set([str(m['source']) for m in metadata]))
+            response.set_sources(sources=[str(m['source']) for m in metadata])
 
-        response = self.llm_chain.run(question=question, context=context)
-        if self.add_sources_to_response:
-            response += '\n\nSources:'
-            for i, (source) in enumerate(sources):
-                logger.info(source)
-                response += f'\n [{i+1}] {source}'
+        answer = self.llm_chain.run(question=question, context=context)
+        response.set_response(answer)
 
         if self.debug:
             sep = '\n' + '-' * 100
             logger.info(sep)
             logger.info(f'messages_contex: {messages_context} {sep}')
             logger.info(f'relevant_docs: {relevant_docs} {sep}')
-            sources_str = '\n'.join(sources)
+            sources_str = '\n'.join(response.get_sources())
             logger.info(f"sources:\n{sources_str}")
             logger.info(f'context len: {len(context)}')
             logger.info(f'context: {context} {sep}')
             logger.info(f'question: {question} {sep}')
-            logger.info(f'response: {response} {sep}')
+            logger.info(f'response: {response.get_response()} {sep}')
         return response
