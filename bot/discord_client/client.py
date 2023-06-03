@@ -3,6 +3,7 @@ import discord
 from bot.logger import logger
 from bot.question_answering.response import Response
 from bot.question_answering import LangChainModel
+from bot.discord_client.utils import split_text_into_chunks
 
 
 class DiscordClient(discord.Client):
@@ -80,7 +81,13 @@ class DiscordClient(discord.Client):
 
 
     async def send_message(self, message, response: Response):
-        await message.channel.send(response.get_response()[:self.max_message_len])
+        chunks = split_text_into_chunks(
+            text=response.get_response(),
+            split_characters=[". ", ", ", "\n"],
+            max_size=self.max_message_len
+        )
+        for chunk in chunks:
+            await message.channel.send(chunk)
         await message.channel.send(response.get_sources_as_text())
 
 
