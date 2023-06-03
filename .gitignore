@@ -50,8 +50,10 @@ venv/
 # OS
 .DS_Store
 
+# IDE
+.vscode
+
 # Project
-.env
 .temp
 models/weights/
 data/datasets/*

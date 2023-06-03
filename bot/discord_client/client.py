@@ -1,7 +1,9 @@
 from typing import List
 import discord
 from bot.logger import logger
+from bot.question_answering.response import Response
 from bot.question_answering import LangChainModel
+from bot.discord_client.utils import split_text_into_chunks
 
 
 class DiscordClient(discord.Client):
@@ -45,12 +47,49 @@ class DiscordClient(discord.Client):
         self.enable_commands: bool = enable_commands
         self.max_message_len: int = 2000
 
+
     async def on_ready(self):
         """
         Callback function to be called when the client is ready.
         """
         logger.info('Successfully logged in as: {0.user}'.format(self))
         await self.change_presence(activity=discord.Game(name='Chatting...'))
+
+
+    async def get_last_messages(self, message) -> List[str]:
+        """
+        Method to fetch recent messages from a message's channel.
+
+        Args:
+            message (Message): The discord Message object used to identify the channel.
+
+        Returns:
+            List[str]: Reversed list of recent messages from the channel,
+            excluding the input message. Messages may be prefixed with the author's name 
+            if `self.use_names_in_context` is True.
+        """
+        last_messages: List[str] = []
+        async for msg in message.channel.history(
+            limit=self.num_last_messages):
+            if self.use_names_in_context:
+                last_messages.append(f'{msg.author}: {msg.content}')
+            else:
+                last_messages.append(msg.content)
+        last_messages.reverse()
+        last_messages.pop() # remove last message from context
+        return last_messages
+
+
+    async def send_message(self, message, response: Response):
+        chunks = split_text_into_chunks(
+            text=response.get_response(),
+            split_characters=[". ", ", ", "\n"],
+            max_size=self.max_message_len
+        )
+        for chunk in chunks:
+            await message.channel.send(chunk)
+        await message.channel.send(response.get_sources_as_text())
+
 
     async def on_message(self, message):
         """
@@ -66,27 +105,13 @@ class DiscordClient(discord.Client):
                 await message.channel.purge()
                 return
 
-        last_messages: List[str] = []
-        async for msg in message.channel.history(
-            limit=self.num_last_messages):
-            if self.use_names_in_context:
-                last_messages.append(f'{msg.author}: {msg.content}')
-            else:
-                last_messages.append(msg.content)
-        last_messages.reverse()
-        last_messages.pop() # remove last message from context
+        last_messages = await self.get_last_messages(message)
         context = '\n'.join(last_messages)
 
-        logger.info('Received message: {0.content}'.format(message))
         response = self.model.get_answer(message.content, context)
+        logger.info('Received message: {0.content}'.format(message))
         logger.info('Sending response: {0}'.format(response))
         try:
-            if len(response) > self.max_message_len:
-                logger.warning(
-                    f'generated response was to long: {len(response)} characters ' \
-                    f'truncating to {self.max_message_len} characters'
-                )
-                response = response[:self.max_message_len]
-            await message.channel.send(response)
+            await self.send_message(message, response)
         except Exception as e:
             logger.error('Failed to send response: {0}'.format(e))
