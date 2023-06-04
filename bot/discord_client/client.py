@@ -45,6 +45,7 @@ class DiscordClient(discord.Client):
         self.num_last_messages: int = num_last_messages
         self.use_names_in_context: bool = use_names_in_context
         self.enable_commands: bool = enable_commands
+        self.min_messgae_len: int = 1800
         self.max_message_len: int = 2000
 
 
@@ -84,6 +85,7 @@ class DiscordClient(discord.Client):
         chunks = split_text_into_chunks(
             text=response.get_response(),
             split_characters=[". ", ", ", "\n"],
+            min_size=self.min_messgae_len,
             max_size=self.max_message_len
         )
         for chunk in chunks:
@@ -108,8 +110,8 @@ class DiscordClient(discord.Client):
         last_messages = await self.get_last_messages(message)
         context = '\n'.join(last_messages)
 
-        response = self.model.get_answer(message.content, context)
         logger.info('Received message: {0.content}'.format(message))
+        response = self.model.get_answer(message.content, context)
         logger.info('Sending response: {0}'.format(response))
         try:
             await self.send_message(message, response)

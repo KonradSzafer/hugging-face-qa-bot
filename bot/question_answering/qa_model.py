@@ -2,7 +2,7 @@ import os
 import subprocess
 from typing import Mapping, Optional, List, Any
 from langchain import PromptTemplate, HuggingFaceHub, LLMChain
-from langchain.llms import OpenAI, HuggingFacePipeline
+from langchain.llms import HuggingFacePipeline
 from langchain.llms.base import LLM
 from langchain.embeddings import HuggingFaceEmbeddings, HuggingFaceHubEmbeddings, HuggingFaceInstructEmbeddings
 from langchain.vectorstores import FAISS
