@@ -3,9 +3,14 @@ import json
 import os
 import re
 import subprocess
+import requests
+import pandas as pd
 from bs4 import BeautifulSoup
 from markdown import markdown
-import pandas as pd
+from tqdm import tqdm
+
+
+VALIDATE_URLS = False
 
 
 def download_repositories(repo_urls_file: str, repo_dir: str):
@@ -57,11 +62,21 @@ def extract_markdown_from_directories(repo_urls_file: str, repo_dir: str, docs_d
         repo_name, file_path = source.split('/', 1)
         repo_url_prefix = None
         for repo_url in repo_urls:
-            if repo_name in repo_url:
+            if repo_name == repo_url.split('/')[-1]:
                 repo_url_prefix = repo_url
+                break
         if not repo_url_prefix:
             raise ValueError(f"Repo URL not found for {repo_name}")
-        url = f'{repo_url_prefix}/blob/main/{file_path}' 
+        url = f'{repo_url_prefix}/blob/main/{file_path}'
+        if VALIDATE_URLS:
+            try:
+                response = requests.get(url)
+                response.raise_for_status()
+            except:
+                print(f'filename: {filename}')
+                print(f'repo: {repo_name}, file: {file_path}')
+                print(f'url: {url}')
+                raise
         return url
 
     # creates a valid filename by replacing certain characters and removing the repo_dir path
@@ -75,7 +90,7 @@ def extract_markdown_from_directories(repo_urls_file: str, repo_dir: str, docs_d
     if not os.path.exists(docs_dir):
         os.makedirs(docs_dir)
     copied_files = []
-    for filename in filtered_files:
+    for filename in tqdm(filtered_files):
         source_url = get_github_url(filename, repo_urls, repo_dir)
         data = f"source: {source_url}\n\n"
         with open(filename, 'r') as f:
