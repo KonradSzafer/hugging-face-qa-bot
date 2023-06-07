@@ -49,6 +49,8 @@ python3 -m bot
 
 ## Development Instructions
 
+We use `Python 3.10`
+
 To install all necessary Python packages, run the following command:
 
 ```bash
