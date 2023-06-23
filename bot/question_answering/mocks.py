@@ -18,7 +18,7 @@ class MockLocalBinaryModel(LLM):
     """
 
     model_path: str = None
-    llm: str = {"mock": "READY TO MOCK"}
+    llm: str = "READY TO MOCK"
 
     def __init__(self, model_id: str = None):
         super().__init__()
