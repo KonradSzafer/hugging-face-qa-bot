@@ -24,22 +24,6 @@ def get_env(env_name: str, default = None) -> str:
     else:
         return env
 
-def to_bool(variable: str) -> bool:
-    """
-    Convert a string to a boolean.
-
-    Args:
-        variable (str): The string to be converted.
-
-    Returns:
-        bool: The boolean value of the string.
-    """
-    if variable.lower() in ['true', '1']:
-        return True
-    elif variable.lower() in ['false', '0']:
-        return False
-    else:
-        raise ValueError(f'Cannot parse: {variable}')
 
 @dataclass
 class Config:
@@ -68,14 +52,14 @@ class Config:
     question_answering_model_id: str = get_env('QUESTION_ANSWERING_MODEL_ID')
     embedding_model_id: str = get_env('EMBEDDING_MODEL_ID')
     index_name: str = get_env('INDEX_NAME')
-    use_docs_in_context: bool = to_bool(get_env('USE_DOCS_IN_CONTEXT', True))
-    add_sources_to_response: bool = to_bool(get_env('ADD_SOURCES_TO_RESPONSE', True))
-    use_messages_in_context: bool = to_bool(get_env('USE_MESSEGES_IN_CONTEXT', True))
+    use_docs_in_context: bool = eval(get_env('USE_DOCS_IN_CONTEXT', True))
+    add_sources_to_response: bool = eval(get_env('ADD_SOURCES_TO_RESPONSE', True))
+    use_messages_in_context: bool = eval(get_env('USE_MESSEGES_IN_CONTEXT', True))
     num_last_messages: int = int(get_env('NUM_LAST_MESSAGES', 2))
-    use_names_in_context: bool = to_bool(get_env('USE_NAMES_IN_CONTEXT', False))
-    enable_commands: bool = to_bool(get_env('ENABLE_COMMANDS', True))
-    run_locally: bool = to_bool(get_env('RUN_LOCALLY', True))
-    debug: bool = to_bool(get_env('DEBUG', True))
+    use_names_in_context: bool = eval(get_env('USE_NAMES_IN_CONTEXT', False))
+    enable_commands: bool = eval(get_env('ENABLE_COMMANDS', True))
+    run_locally: bool = eval(get_env('RUN_LOCALLY', True))
+    debug: bool = eval(get_env('DEBUG', True))
 
     def __post_init__(self):
         # validate config
