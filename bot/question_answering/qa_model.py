@@ -108,7 +108,6 @@ class LangChainModel():
         use_docs_for_context (bool): Whether to use relevant documents as context for generating answers.
         use_messages_for_context (bool): Whether to use previous messages as context for generating answers.
         debug (bool): Whether to log debug information.
-        model_kwargs (Dict[str, Any]): The model keyword arguments to be used.
         llm_model (Union[LocalBinaryModel, HuggingFacePipeline, HuggingFaceHub]): The LLM model to be used.
         embedding_model (Union[HuggingFaceInstructEmbeddings, HuggingFaceHubEmbeddings]): The embedding model to be used.
         prompt_template (PromptTemplate): The prompt template to be used.
@@ -131,11 +130,6 @@ class LangChainModel():
         self.add_sources_to_response = add_sources_to_response
         self.use_messages_for_context = use_messages_for_context
         self.debug = debug
-        self.model_kwargs = {
-            'min_length': 100,
-            'max_length': 2000,
-            'temperature': 0.1,
-        }
 
         if 'local_models/' in llm_model_id:
             logger.info('using local binary model')
@@ -151,7 +145,11 @@ class LangChainModel():
             self.llm_model = HuggingFacePipeline.from_model_id(
                 model_id=llm_model_id,
                 task='text2text-generation',
-                model_kwargs=self.model_kwargs
+                model_kwargs={
+                    'min_length': 128,
+                    'max_length': 2048,
+                    'temperature': 0.1,
+                }
             )
 
         embed_instruction = "Represent the Hugging Face library documentation"
@@ -217,6 +215,7 @@ class LangChainModel():
             logger.info(f"sources:\n{sources_str}")
             logger.info(f'context len: {len(context)}')
             logger.info(f'context: {context} {sep}')
+            logger.info(f'question len: {len(question)}')
             logger.info(f'question: {question} {sep}')
             logger.info(f'response: {response.get_response()} {sep}')
         return response
