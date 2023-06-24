@@ -2,6 +2,7 @@ import os
 import json
 import requests
 import subprocess
+from urllib.parse import quote
 from typing import Mapping, Optional, List, Any
 from langchain import PromptTemplate, HuggingFaceHub, LLMChain
 from langchain.llms import HuggingFacePipeline
@@ -67,10 +68,16 @@ class APIServedModel(LLM):
         self.model_url = model_url
 
     def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
-        url = f'{self.model_url}/{prompt}'
-        response = requests.get(url)
-        output_text = json.loads(response.content)['output_text']
-        return output_text
+        prompt_encoded = quote(prompt, safe='')
+        url = f'{self.model_url}/?prompt={prompt_encoded}'
+        try:
+            response = requests.get(url)
+            response.raise_for_status() 
+            output_text = json.loads(response.content)['output_text']
+            return output_text
+        except Exception as err:
+            logger.error(f'Error: {err}')
+            return ''
 
     @property
     def _identifying_params(self) -> Mapping[str, Any]:
