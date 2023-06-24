@@ -1,4 +1,6 @@
 import os
+import json
+import requests
 import subprocess
 from typing import Mapping, Optional, List, Any
 from langchain import PromptTemplate, HuggingFaceHub, LLMChain
@@ -37,7 +39,6 @@ class LocalBinaryModel(LLM):
             raise ValueError(f'{self.model_path} does not exist')
         self.llm = Llama(model_path=self.model_path, n_ctx=4096)
 
-
     def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
         prompt = f'Q: {prompt} A: '
         output = self.llm(
@@ -56,6 +57,29 @@ class LocalBinaryModel(LLM):
     @property
     def _llm_type(self) -> str:
         return self.model_path
+
+
+class APIServedModel(LLM):
+    model_url: str = None
+
+    def __init__(self, model_url: str = None):
+        super().__init__()
+        self.model_url = model_url
+
+    def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
+        url = f'{self.model_url}/{prompt}'
+        response = requests.get(url)
+        output_text = json.loads(response.content)['output_text']
+        return output_text
+
+    @property
+    def _identifying_params(self) -> Mapping[str, Any]:
+        return {"name_of_model": f'model url: {self.model_url}'}
+
+    @property
+    def _llm_type(self) -> str:
+        return 'api_model'
+
 
 
 class LangChainModel():
@@ -90,7 +114,6 @@ class LangChainModel():
         llm_model_id: str,
         embedding_model_id: str,
         index_name: str,
-        run_locally: bool = True,
         use_docs_for_context: bool = True,
         add_sources_to_response: bool = True,
         use_messages_for_context: bool = True,
@@ -107,32 +130,30 @@ class LangChainModel():
             'temperature': 0.1,
         }
 
-        if run_locally:
-            logger.info('running models locally')
-            if 'local_models/' in llm_model_id:
-                self.llm_model = LocalBinaryModel(
-                    model_id=llm_model_id
-                )
-            else:
-                self.llm_model = HuggingFacePipeline.from_model_id(
-                    model_id=llm_model_id,
-                    task='text2text-generation',
-                    model_kwargs=self.model_kwargs
-                )
-            embed_instruction = "Represent the Hugging Face library documentation"
-            query_instruction = "Query the most relevant piece of information from the Hugging Face documentation"
-            embedding_model = HuggingFaceInstructEmbeddings(
-                model_name=embedding_model_id,
-                embed_instruction=embed_instruction,
-                query_instruction=query_instruction
+        if 'local_models/' in llm_model_id:
+            logger.info('using local binary model')
+            self.llm_model = LocalBinaryModel(
+                model_id=llm_model_id
+            )
+        elif 'api_models/' in llm_model_id:
+            logger.info('using api served model')
+            self.llm_model = APIServedModel(
+                model_url=llm_model_id.replace('api_models/', '')
             )
         else:
-            logger.info('running models on huggingface hub')
-            self.llm_model = HuggingFaceHub(
-                repo_id=llm_model_id,
+            self.llm_model = HuggingFacePipeline.from_model_id(
+                model_id=llm_model_id,
+                task='text2text-generation',
                 model_kwargs=self.model_kwargs
             )
-            embedding_model = HuggingFaceHubEmbeddings(repo_id=embedding_model_id)
+
+        embed_instruction = "Represent the Hugging Face library documentation"
+        query_instruction = "Query the most relevant piece of information from the Hugging Face documentation"
+        embedding_model = HuggingFaceInstructEmbeddings(
+            model_name=embedding_model_id,
+            embed_instruction=embed_instruction,
+            query_instruction=query_instruction
+        )
 
         prompt_template = \
             "### Instruction:\n" \

@@ -58,7 +58,6 @@ class Config:
     num_last_messages: int = int(get_env('NUM_LAST_MESSAGES', 2))
     use_names_in_context: bool = eval(get_env('USE_NAMES_IN_CONTEXT', False))
     enable_commands: bool = eval(get_env('ENABLE_COMMANDS', True))
-    run_locally: bool = eval(get_env('RUN_LOCALLY', True))
     debug: bool = eval(get_env('DEBUG', True))
 
     def __post_init__(self):
