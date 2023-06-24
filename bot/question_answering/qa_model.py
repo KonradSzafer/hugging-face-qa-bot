@@ -1,5 +1,8 @@
 import os
+import json
+import requests
 import subprocess
+from urllib.parse import quote
 from typing import Mapping, Optional, List, Any
 from langchain import PromptTemplate, HuggingFaceHub, LLMChain
 from langchain.llms import HuggingFacePipeline
@@ -37,7 +40,6 @@ class LocalBinaryModel(LLM):
             raise ValueError(f'{self.model_path} does not exist')
         self.llm = Llama(model_path=self.model_path, n_ctx=4096)
 
-
     def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
         prompt = f'Q: {prompt} A: '
         output = self.llm(
@@ -56,6 +58,35 @@ class LocalBinaryModel(LLM):
     @property
     def _llm_type(self) -> str:
         return self.model_path
+
+
+class APIServedModel(LLM):
+    model_url: str = None
+
+    def __init__(self, model_url: str = None):
+        super().__init__()
+        self.model_url = model_url
+
+    def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
+        prompt_encoded = quote(prompt, safe='')
+        url = f'{self.model_url}/?prompt={prompt_encoded}'
+        try:
+            response = requests.get(url)
+            response.raise_for_status() 
+            output_text = json.loads(response.content)['output_text']
+            return output_text
+        except Exception as err:
+            logger.error(f'Error: {err}')
+            return ''
+
+    @property
+    def _identifying_params(self) -> Mapping[str, Any]:
+        return {"name_of_model": f'model url: {self.model_url}'}
+
+    @property
+    def _llm_type(self) -> str:
+        return 'api_model'
+
 
 
 class LangChainModel():
@@ -77,7 +108,6 @@ class LangChainModel():
         use_docs_for_context (bool): Whether to use relevant documents as context for generating answers.
         use_messages_for_context (bool): Whether to use previous messages as context for generating answers.
         debug (bool): Whether to log debug information.
-        model_kwargs (Dict[str, Any]): The model keyword arguments to be used.
         llm_model (Union[LocalBinaryModel, HuggingFacePipeline, HuggingFaceHub]): The LLM model to be used.
         embedding_model (Union[HuggingFaceInstructEmbeddings, HuggingFaceHubEmbeddings]): The embedding model to be used.
         prompt_template (PromptTemplate): The prompt template to be used.
@@ -90,7 +120,6 @@ class LangChainModel():
         llm_model_id: str,
         embedding_model_id: str,
         index_name: str,
-        run_locally: bool = True,
         use_docs_for_context: bool = True,
         add_sources_to_response: bool = True,
         use_messages_for_context: bool = True,
@@ -101,38 +130,35 @@ class LangChainModel():
         self.add_sources_to_response = add_sources_to_response
         self.use_messages_for_context = use_messages_for_context
         self.debug = debug
-        self.model_kwargs = {
-            'min_length': 100,
-            'max_length': 2000,
-            'temperature': 0.1,
-        }
 
-        if run_locally:
-            logger.info('running models locally')
-            if 'local_models/' in llm_model_id:
-                self.llm_model = LocalBinaryModel(
-                    model_id=llm_model_id
-                )
-            else:
-                self.llm_model = HuggingFacePipeline.from_model_id(
-                    model_id=llm_model_id,
-                    task='text2text-generation',
-                    model_kwargs=self.model_kwargs
-                )
-            embed_instruction = "Represent the Hugging Face library documentation"
-            query_instruction = "Query the most relevant piece of information from the Hugging Face documentation"
-            embedding_model = HuggingFaceInstructEmbeddings(
-                model_name=embedding_model_id,
-                embed_instruction=embed_instruction,
-                query_instruction=query_instruction
+        if 'local_models/' in llm_model_id:
+            logger.info('using local binary model')
+            self.llm_model = LocalBinaryModel(
+                model_id=llm_model_id
+            )
+        elif 'api_models/' in llm_model_id:
+            logger.info('using api served model')
+            self.llm_model = APIServedModel(
+                model_url=llm_model_id.replace('api_models/', '')
             )
         else:
-            logger.info('running models on huggingface hub')
-            self.llm_model = HuggingFaceHub(
-                repo_id=llm_model_id,
-                model_kwargs=self.model_kwargs
+            self.llm_model = HuggingFacePipeline.from_model_id(
+                model_id=llm_model_id,
+                task='text2text-generation',
+                model_kwargs={
+                    'min_length': 128,
+                    'max_length': 2048,
+                    'temperature': 0.1,
+                }
             )
-            embedding_model = HuggingFaceHubEmbeddings(repo_id=embedding_model_id)
+
+        embed_instruction = "Represent the Hugging Face library documentation"
+        query_instruction = "Query the most relevant piece of information from the Hugging Face documentation"
+        embedding_model = HuggingFaceInstructEmbeddings(
+            model_name=embedding_model_id,
+            embed_instruction=embed_instruction,
+            query_instruction=query_instruction
+        )
 
         prompt_template = \
             "### Instruction:\n" \
@@ -189,6 +215,7 @@ class LangChainModel():
             logger.info(f"sources:\n{sources_str}")
             logger.info(f'context len: {len(context)}')
             logger.info(f'context: {context} {sep}')
+            logger.info(f'question len: {len(question)}')
             logger.info(f'question: {question} {sep}')
             logger.info(f'response: {response.get_response()} {sep}')
         return response
