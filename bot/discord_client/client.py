@@ -1,8 +1,9 @@
-from typing import List
+from typing import List, Optional
 import discord
 from bot.logger import logger
 from bot.question_answering.response import Response
 from bot.question_answering import LangChainModel
+from discord import app_commands
 from bot.discord_client.utils import split_text_into_chunks
 
 
@@ -31,12 +32,15 @@ class DiscordClient(discord.Client):
         model: LangChainModel,
         num_last_messages: int = 5,
         use_names_in_context: bool = True,
-        enable_commands: bool = True
+        enable_commands: bool = True,
+        intents: Optional[discord.Intents] = None
     ):
         logger.info('Initializing Discord client...')
         intents = discord.Intents.all()
-        intents.message_content = True
-        super().__init__(intents=intents, command_prefix='!')
+        if intents is None:
+            intents = discord.Intents.default()
+        intents.members = True
+        super().__init__(intents=intents, command_prefix='/')
 
         assert num_last_messages >= 1, \
             'The number of last messages in context should be at least 1'
@@ -47,7 +51,7 @@ class DiscordClient(discord.Client):
         self.enable_commands: bool = enable_commands
         self.min_messgae_len: int = 1800
         self.max_message_len: int = 2000
-
+        self.tree = app_commands.CommandTree(self)
 
     async def on_ready(self):
         """
@@ -92,28 +96,42 @@ class DiscordClient(discord.Client):
             await message.channel.send(chunk)
         await message.channel.send(response.get_sources_as_text())
 
+    async def setup_hook(self) -> None:
+        self.tree.add_command(hugginghelp)
+        await self.tree.sync()
+    
+    async def on_guild_join(self, guild: discord.Guild) -> None:
+        await self.tree.sync(guild=guild)
 
-    async def on_message(self, message):
+    async def generate_answer(self, interaction: discord.Interaction, question_str: str) -> None:
         """
-        Callback function to be called when a message is received.
+        Generate an answer to a question.
 
         Args:
-            message (discord.Message): The received message.
+            interaction (discord.Interaction): The interaction that triggered the command.
+            question_str (str): The question string.
         """
-        if message.author == self.user:
-            return
-        if self.enable_commands and message.content.startswith('!'):
-            if message.content == '!clear':
-                await message.channel.purge()
-                return
+        context = '\n'.join(await self.get_last_messages(interaction)) # use interaction to get the last messages
+        logger.info(f'Received question: {question_str}')
+        response = self.model.get_answer(question_str, context)
+        logger.info('Generated response: {0}'.format(response.get_response()))
 
-        last_messages = await self.get_last_messages(message)
-        context = '\n'.join(last_messages)
+        await interaction.edit_original_response(content=f"{interaction.user.mention} asked: **{question_str}** \n{response}")
+        logger.info("Response sent")
 
-        logger.info('Received message: {0.content}'.format(message))
-        response = self.model.get_answer(message.content, context)
-        logger.info('Sending response: {0}'.format(response))
-        try:
-            await self.send_message(message, response)
-        except Exception as e:
-            logger.error('Failed to send response: {0}'.format(e))
+
+@app_commands.command(name="hugginghelp", description="Help me with Hugging Face")
+async def hugginghelp(interaction: discord.Interaction, question: str) -> None:
+    """
+    Command to generate answers to questions.
+
+    Args:
+        interaction (discord.Interaction): The interaction that triggered the command.
+        prompt (str): The question to be answered.
+
+    """
+    if question != "":
+        await interaction.response.send_message("Thinking... 🤔")
+        interaction.client.loop.create_task(interaction.client.generate_answer(interaction, question))
+    else:
+        await interaction.response.send_message("Please provide a question")
