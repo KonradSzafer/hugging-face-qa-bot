@@ -15,4 +15,6 @@ COPY config/api/ config/api/
 COPY index/ index/
 COPY api/ api/
 
+EXPOSE 8000
+
 ENTRYPOINT [ "python3", "-m", "api" ]

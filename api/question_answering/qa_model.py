@@ -16,29 +16,16 @@ from api.question_answering.response import Response
 
 
 class LocalBinaryModel(LLM):
-    """
-    Local Binary Model class, used for loading a locally stored Llama model.
-
-    Args:
-        model_id (str): The ID of the model to be loaded.
-
-    Attributes:
-        model_path (str): The path to the model to be loaded.
-        llm (Llama): The Llama object containing the loaded model.
-
-    Raises:
-        ValueError: If the model_path does not exist.
-
-    """
-    model_path: str = None
+    model_id: str = None
     llm: Llama = None
 
     def __init__(self, model_id: str = None):
         super().__init__()
-        self.model_path = f'api/question_answering/{model_id}'
-        if not os.path.exists(self.model_path):
-            raise ValueError(f'{self.model_path} does not exist')
-        self.llm = Llama(model_path=self.model_path, n_ctx=4096)
+        model_path = f'api/question_answering/{model_id}'
+        if not os.path.exists(model_path):
+            raise ValueError(f'{model_path} does not exist')
+        self.model_id = model_id
+        self.llm = Llama(model_path=model_path, n_ctx=4096)
 
     def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
         prompt = f'Q: {prompt} A: '
@@ -53,11 +40,49 @@ class LocalBinaryModel(LLM):
 
     @property
     def _identifying_params(self) -> Mapping[str, Any]:
-        return {"name_of_model": self.model_path}
+        return {"name_of_model": self.model_id}
 
     @property
     def _llm_type(self) -> str:
-        return self.model_path
+        return self.model_id
+
+
+class TransformersPipelineModel(LLM):
+    model_id: str = None
+    pipeline: str = None
+
+    def __init__(self, model_id: str = None):
+        super().__init__()
+        self.model_id = model_id
+
+        tokenizer = AutoTokenizer.from_pretrained(model_id)
+        model = AutoModelForCausalLM.from_pretrained(
+            model_id,
+            torch_dtype=torch.bfloat16,
+            trust_remote_code=True,
+            load_in_8bit=False,
+            device_map="auto",
+            resume_download=True,
+        )
+        self.pipeline = transformers.pipeline(
+            "text-generation",
+            model=model,
+            tokenizer=tokenizer,
+            max_new_tokens=2048,
+        )
+
+    def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
+        output_text = self.pipeline(prompt)[0]['generated_text']
+        output_text = output_text.replace(prompt+'\n', '')
+        return output_text
+
+    @property
+    def _identifying_params(self) -> Mapping[str, Any]:
+        return {"name_of_model": self.model_id}
+
+    @property
+    def _llm_type(self) -> str:
+        return self.model_id
 
 
 class APIServedModel(LLM):
@@ -142,14 +167,9 @@ class QAModel():
                 model_url=llm_model_id.replace('api_models/', '')
             )
         else:
-            self.llm_model = HuggingFacePipeline.from_model_id(
-                model_id=llm_model_id,
-                task='text2text-generation',
-                model_kwargs={
-                    'min_length': 128,
-                    'max_length': 2048,
-                    'temperature': 0.1,
-                }
+            logger.info('using transformers pipeline model')
+            self.llm_model = TransformersPipelineModel(
+                model_id=llm_model_id
             )
 
         embed_instruction = "Represent the Hugging Face library documentation"
