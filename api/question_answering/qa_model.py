@@ -11,8 +11,8 @@ from langchain.embeddings import HuggingFaceEmbeddings, HuggingFaceHubEmbeddings
 from langchain.vectorstores import FAISS
 from llama_cpp import Llama
 
-from bot.logger import logger
-from bot.question_answering.response import Response
+from api.logger import logger
+from api.question_answering.response import Response
 
 
 class LocalBinaryModel(LLM):
@@ -35,7 +35,7 @@ class LocalBinaryModel(LLM):
 
     def __init__(self, model_id: str = None):
         super().__init__()
-        self.model_path = f'bot/question_answering/{model_id}'
+        self.model_path = f'api/question_answering/{model_id}'
         if not os.path.exists(self.model_path):
             raise ValueError(f'{self.model_path} does not exist')
         self.llm = Llama(model_path=self.model_path, n_ctx=4096)
@@ -89,9 +89,9 @@ class APIServedModel(LLM):
 
 
 
-class LangChainModel():
+class QAModel():
     """
-    LangChainModel class, used for generating answers to questions.
+    QAModel class, used for generating answers to questions.
 
     Args:
         llm_model_id (str): The ID of the LLM model to be used.
