@@ -1,8 +1,10 @@
-from typing import List
+import json
+import requests
+from urllib.parse import quote
 import discord
+from typing import List
+
 from bot.logger import logger
-from bot.question_answering.response import Response
-from bot.question_answering import LangChainModel
 from bot.discord_client.utils import split_text_into_chunks
 
 
@@ -11,14 +13,14 @@ class DiscordClient(discord.Client):
     Discord Client class, used for interacting with a Discord server.
 
     Args:
-        model (LangChainModel): The LangChainModel to be used for generating answers.
+        qa_service_url (str): The URL of the question answering service.
         num_last_messages (int, optional): The number of previous messages to use as context for generating answers.
         Defaults to 5.
         use_names_in_context (bool, optional): Whether to include user names in the message context. Defaults to True.
         enable_commands (bool, optional): Whether to enable commands for the bot. Defaults to True.
 
     Attributes:
-        model (LangChainModel): The LangChainModel to be used for generating answers.
+        qa_service_url (str): The URL of the question answering service.
         num_last_messages (int): The number of previous messages to use as context for generating answers.
         use_names_in_context (bool): Whether to include user names in the message context.
         enable_commands (bool): Whether to enable commands for the bot.
@@ -28,10 +30,11 @@ class DiscordClient(discord.Client):
     """
     def __init__(
         self,
-        model: LangChainModel,
+        qa_service_url: str,
         num_last_messages: int = 5,
         use_names_in_context: bool = True,
-        enable_commands: bool = True
+        enable_commands: bool = True,
+        debug: bool = False
     ):
         logger.info('Initializing Discord client...')
         intents = discord.Intents.all()
@@ -41,10 +44,11 @@ class DiscordClient(discord.Client):
         assert num_last_messages >= 1, \
             'The number of last messages in context should be at least 1'
 
-        self.model: LangChainModel = model
+        self.qa_service_url: str = qa_service_url
         self.num_last_messages: int = num_last_messages
         self.use_names_in_context: bool = use_names_in_context
         self.enable_commands: bool = enable_commands
+        self.debug: bool = debug
         self.min_messgae_len: int = 1800
         self.max_message_len: int = 2000
 
@@ -81,16 +85,16 @@ class DiscordClient(discord.Client):
         return last_messages
 
 
-    async def send_message(self, message, response: Response):
+    async def send_message(self, message, answer: str, sources: str):
         chunks = split_text_into_chunks(
-            text=response.get_response(),
+            text=answer,
             split_characters=[". ", ", ", "\n"],
             min_size=self.min_messgae_len,
             max_size=self.max_message_len
         )
         for chunk in chunks:
             await message.channel.send(chunk)
-        await message.channel.send(response.get_sources_as_text())
+        await message.channel.send(sources)
 
 
     async def on_message(self, message):
@@ -111,12 +115,18 @@ class DiscordClient(discord.Client):
         context = '\n'.join(last_messages)
 
         logger.info('Received message: {0.content}'.format(message))
-        response = self.model.get_answer(
-            question=message.content,
-            messages_context=context
-        )
+        question_encoded = quote(message.content, safe='')
+        context_encoded = quote(context, safe='')
+        url = \
+            f'{self.qa_service_url}/' \
+            f'?question={question_encoded}' \
+            f'?&messgages_context={context_encoded}'
+        response = requests.get(url)
+        response.raise_for_status()
+        response = json.loads(response.content)
+
         logger.info('Sending response: {0}'.format(response))
         try:
-            await self.send_message(message, response)
+            await self.send_message(message, response['answer'], response['sources'])
         except Exception as e:
             logger.error('Failed to send response: {0}'.format(e))
