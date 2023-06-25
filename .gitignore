@@ -54,9 +54,11 @@ venv/
 .vscode
 
 # Project
-.temp
-models/weights/
+wandb/
+
+# Api
+api/question_answering/local_models
+
+# Data
 data/datasets/*
 !data/datasets/hf_repositories_urls.json
-bot/question_answering/local_models/
-wandb/

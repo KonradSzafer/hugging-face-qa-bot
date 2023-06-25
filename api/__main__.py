@@ -1,7 +1,9 @@
 import uvicorn
 from fastapi import FastAPI
+
 from api.config import Config
 from api.question_answering import QAModel
+from api.logger import logger
 
 
 config = Config()
@@ -27,7 +29,10 @@ def get_answer(question: str, messgages_context: str):
         question=question,
         messages_context=messgages_context
     )
-    return {"answer": response.get_response()}
+    return {
+        "answer": response.get_answer(),
+        "sources": response.get_sources_as_text()
+    }
 
 
 if __name__ == "__main__":

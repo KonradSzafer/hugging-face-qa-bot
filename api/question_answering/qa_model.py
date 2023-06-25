@@ -204,7 +204,7 @@ class QAModel():
             response.set_sources(sources=[str(m['source']) for m in metadata])
 
         answer = self.llm_chain.run(question=question, context=context)
-        response.set_response(answer)
+        response.set_answer(answer)
 
         if self.debug:
             sep = '\n' + '-' * 100
@@ -217,5 +217,5 @@ class QAModel():
             logger.info(f'context: {context} {sep}')
             logger.info(f'question len: {len(question)}')
             logger.info(f'question: {question} {sep}')
-            logger.info(f'response: {response.get_response()} {sep}')
+            logger.info(f'response: {response.get_answer()} {sep}')
         return response
