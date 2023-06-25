@@ -11,8 +11,7 @@ RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 WORKDIR /hugging-face-qa-bot
-COPY .env .
-COPY index/ index/
+COPY config/bot/ config/bot/
 COPY bot/ bot/
 
 ENTRYPOINT [ "python3", "-m", "bot" ]

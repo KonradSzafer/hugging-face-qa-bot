@@ -1,7 +1,7 @@
 import os
 from dataclasses import dataclass, asdict
 from typing import Dict, Union
-from api.logger import logger
+from bot.logger import logger
 
 
 def get_env(env_name: str, default = None) -> str:
