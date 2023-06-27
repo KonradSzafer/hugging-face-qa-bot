@@ -1,0 +1,23 @@
+version: '3'
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - 8000:8000
+    networks:
+      - mynetwork
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.bot
+    ports:
+      - 80:80
+    depends_on:
+      - api
+    networks:
+      - mynetwork
+networks:
+  mynetwork:
+    driver: bridge
