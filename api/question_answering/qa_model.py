@@ -172,14 +172,6 @@ class QAModel():
                 model_id=llm_model_id
             )
 
-        embed_instruction = "Represent the Hugging Face library documentation"
-        query_instruction = "Query the most relevant piece of information from the Hugging Face documentation"
-        embedding_model = HuggingFaceInstructEmbeddings(
-            model_name=embedding_model_id,
-            embed_instruction=embed_instruction,
-            query_instruction=query_instruction
-        )
-
         prompt_template = \
             "### Instruction:\n" \
             "Give an answer that contains all the necessary information for the question.\n" \
@@ -191,7 +183,16 @@ class QAModel():
             input_variables=['question', 'context']
         )
         self.llm_chain = LLMChain(prompt=prompt, llm=self.llm_model)
-        self.knowledge_index = FAISS.load_local(f"./{index_name}", embedding_model)
+
+        if self.use_docs_for_context:
+            embed_instruction = "Represent the Hugging Face library documentation"
+            query_instruction = "Query the most relevant piece of information from the Hugging Face documentation"
+            embedding_model = HuggingFaceInstructEmbeddings(
+                model_name=embedding_model_id,
+                embed_instruction=embed_instruction,
+                query_instruction=query_instruction
+            )
+            self.knowledge_index = FAISS.load_local(f"./{index_name}", embedding_model)
 
 
     def get_answer(self, question: str, messages_context: str = '') -> Response:

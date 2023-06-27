@@ -25,7 +25,7 @@ class Config:
     question_answering_model_id: str = get_env('QUESTION_ANSWERING_MODEL_ID')
     embedding_model_id: str = get_env('EMBEDDING_MODEL_ID')
     index_name: str = get_env('INDEX_NAME')
-    use_docs_in_context: bool = eval(get_env('USE_DOCS_IN_CONTEXT', 'True'))
+    use_docs_for_context: bool = eval(get_env('USE_DOCS_FOR_CONTEXT', 'True'))
     add_sources_to_response: bool = eval(get_env('ADD_SOURCES_TO_RESPONSE', 'True'))
     use_messages_in_context: bool = eval(get_env('USE_MESSAGES_IN_CONTEXT', 'True'))
     debug: bool = eval(get_env('DEBUG', 'True'))
