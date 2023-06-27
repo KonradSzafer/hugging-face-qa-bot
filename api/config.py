@@ -32,7 +32,7 @@ class Config:
 
     def __post_init__(self):
         # validate config
-        if not self.use_docs_in_context and self.add_sources_to_response:
+        if not self.use_docs_for_context and self.add_sources_to_response:
             raise ValueError('Cannot add sources to response if not using docs in context')
         self.log()
 

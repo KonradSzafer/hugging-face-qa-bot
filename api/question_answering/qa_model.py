@@ -90,6 +90,8 @@ class APIServedModel(LLM):
 
     def __init__(self, model_url: str = None):
         super().__init__()
+        if model_url[-1] == '/':
+            raise ValueError('URL should not end with a slash - "/"')
         self.model_url = model_url
 
     def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
@@ -102,7 +104,7 @@ class APIServedModel(LLM):
             return output_text
         except Exception as err:
             logger.error(f'Error: {err}')
-            return ''
+            return 'Error: {err}'
 
     @property
     def _identifying_params(self) -> Mapping[str, Any]:
@@ -233,8 +235,8 @@ class QAModel():
             logger.info(f'messages_contex: {messages_context} {sep}')
             logger.info(f'relevant_docs: {relevant_docs} {sep}')
             sources_str = '\n'.join(response.get_sources())
-            logger.info(f"sources:\n{sources_str}")
-            logger.info(f'context len: {len(context)}')
+            logger.info(f"sources:\n{sources_str} {sep}")
+            logger.info(f'context len: {len(context)} {sep}')
             logger.info(f'context: {context} {sep}')
             logger.info(f'question len: {len(question)}')
             logger.info(f'question: {question} {sep}')

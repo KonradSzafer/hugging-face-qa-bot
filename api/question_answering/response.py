@@ -16,6 +16,8 @@ class Response:
         return self.sources
 
     def get_sources_as_text(self) -> str:
+        if not self.sources:
+            return ''
         sources_text = '\n\nSources:'
         for i, (source) in enumerate(self.sources):
             sources_text += f'\n [{i+1}] {source}'
