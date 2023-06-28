@@ -87,24 +87,28 @@ class TransformersPipelineModel(LLM):
 
 class APIServedModel(LLM):
     model_url: str = None
+    debug: bool = None
 
-    def __init__(self, model_url: str = None):
+    def __init__(self, model_url: str = None, debug: bool = None):
         super().__init__()
         if model_url[-1] == '/':
             raise ValueError('URL should not end with a slash - "/"')
         self.model_url = model_url
+        self.debug = debug
 
     def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
         prompt_encoded = quote(prompt, safe='')
         url = f'{self.model_url}/?prompt={prompt_encoded}'
+        if self.debug:
+            logger.info(f'URL: {url}')
         try:
-            response = requests.get(url)
+            response = requests.get(url, timeout=1200, verify=False)
             response.raise_for_status() 
             output_text = json.loads(response.content)['output_text']
             return output_text
         except Exception as err:
             logger.error(f'Error: {err}')
-            return 'Error: {err}'
+            return f'Error: {err}'
 
     @property
     def _identifying_params(self) -> Mapping[str, Any]:
@@ -166,7 +170,8 @@ class QAModel():
         elif 'api_models/' in llm_model_id:
             logger.info('using api served model')
             self.llm_model = APIServedModel(
-                model_url=llm_model_id.replace('api_models/', '')
+                model_url=llm_model_id.replace('api_models/', ''),
+                debug=self.debug
             )
         else:
             logger.info('using transformers pipeline model')
@@ -217,6 +222,7 @@ class QAModel():
             messages_context = f'\nPrevious questions and answers:\n{messages_context}'
             context += messages_context
         if self.use_docs_for_context:
+            logger.info(f'Retriving documents')
             relevant_docs = self.knowledge_index.similarity_search(
                 query=messages_context+question,
                 k=3
@@ -226,8 +232,10 @@ class QAModel():
             metadata = [doc.metadata for doc in relevant_docs]
             response.set_sources(sources=[str(m['source']) for m in metadata])
 
+        logger.info(f'Running LLM chain')
         answer = self.llm_chain.run(question=question, context=context)
         response.set_answer(answer)
+        logger.info(f'Received answer')
 
         if self.debug:
             sep = '\n' + '-' * 100
