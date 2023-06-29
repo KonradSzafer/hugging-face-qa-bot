@@ -2,8 +2,11 @@ import os
 import json
 import requests
 import subprocess
+import torch
+import transformers
 from urllib.parse import quote
 from typing import Mapping, Optional, List, Any
+from transformers import AutoTokenizer, AutoModelForCausalLM
 from langchain import PromptTemplate, HuggingFaceHub, LLMChain
 from langchain.llms import HuggingFacePipeline
 from langchain.llms.base import LLM
