@@ -24,7 +24,7 @@ class Config:
     huggingface_token: str = get_env('HUGGINGFACEHUB_API_TOKEN')
     question_answering_model_id: str = get_env('QUESTION_ANSWERING_MODEL_ID')
     embedding_model_id: str = get_env('EMBEDDING_MODEL_ID')
-    index_name: str = get_env('INDEX_NAME')
+    index_repo_id: str = get_env('INDEX_REPO_ID')
     use_docs_for_context: bool = eval(get_env('USE_DOCS_FOR_CONTEXT', 'True'))
     add_sources_to_response: bool = eval(get_env('ADD_SOURCES_TO_RESPONSE', 'True'))
     use_messages_in_context: bool = eval(get_env('USE_MESSAGES_IN_CONTEXT', 'True'))
