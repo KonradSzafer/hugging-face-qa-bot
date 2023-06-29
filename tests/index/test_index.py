@@ -1,7 +1,16 @@
 import pytest
 from typing import Any
+from huggingface_hub import snapshot_download
 from langchain.embeddings import HuggingFaceInstructEmbeddings
 from langchain.vectorstores import FAISS
+
+
+snapshot_download(
+    repo_id='KonradSzafer/index',
+    allow_patterns=['*.faiss', '*.pkl'], 
+    repo_type='dataset',
+    local_dir='index/'
+)
 
 @pytest.fixture(scope="module")
 def embedding_model() -> HuggingFaceInstructEmbeddings:
