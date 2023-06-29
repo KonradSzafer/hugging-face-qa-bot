@@ -6,6 +6,7 @@ import torch
 import transformers
 from urllib.parse import quote
 from typing import Mapping, Optional, List, Any
+from huggingface_hub import snapshot_download
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from langchain import PromptTemplate, HuggingFaceHub, LLMChain
 from langchain.llms import HuggingFacePipeline
@@ -130,7 +131,7 @@ class QAModel():
     Args:
         llm_model_id (str): The ID of the LLM model to be used.
         embedding_model_id (str): The ID of the embedding model to be used.
-        index_name (str): The name of the FAISS index to be used.
+        index_repo_id (str): The ID of the index repository to be used.
         run_locally (bool, optional): Whether to run the models locally or on the Hugging Face hub. Defaults to True.
         use_docs_for_context (bool, optional): Whether to use relevant documents as context for generating answers.
         Defaults to True.
@@ -153,7 +154,7 @@ class QAModel():
         self,
         llm_model_id: str,
         embedding_model_id: str,
-        index_name: str,
+        index_repo_id: str,
         use_docs_for_context: bool = True,
         add_sources_to_response: bool = True,
         use_messages_for_context: bool = True,
@@ -195,6 +196,14 @@ class QAModel():
         self.llm_chain = LLMChain(prompt=prompt, llm=self.llm_model)
 
         if self.use_docs_for_context:
+            logger.info('Downloading index')
+            snapshot_download(
+                repo_id=index_repo_id,
+                allow_patterns=['*.faiss', '*.pkl'], 
+                repo_type='dataset',
+                local_dir='index/'
+            )
+
             embed_instruction = "Represent the Hugging Face library documentation"
             query_instruction = "Query the most relevant piece of information from the Hugging Face documentation"
             embedding_model = HuggingFaceInstructEmbeddings(
@@ -202,7 +211,8 @@ class QAModel():
                 embed_instruction=embed_instruction,
                 query_instruction=query_instruction
             )
-            self.knowledge_index = FAISS.load_local(f"./{index_name}", embedding_model)
+            logger.info('Loading index')
+            self.knowledge_index = FAISS.load_local(f"./index", embedding_model)
 
 
     def get_answer(self, question: str, messages_context: str = '') -> Response:
