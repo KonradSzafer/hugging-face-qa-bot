@@ -28,12 +28,15 @@ class Config:
     use_docs_for_context: bool = eval(get_env('USE_DOCS_FOR_CONTEXT', 'True'))
     add_sources_to_response: bool = eval(get_env('ADD_SOURCES_TO_RESPONSE', 'True'))
     use_messages_in_context: bool = eval(get_env('USE_MESSAGES_IN_CONTEXT', 'True'))
+    num_relevant_docs: bool = eval(get_env('NUM_RELEVANT_DOCS', 3))
     debug: bool = eval(get_env('DEBUG', 'True'))
 
     def __post_init__(self):
         # validate config
         if not self.use_docs_for_context and self.add_sources_to_response:
             raise ValueError('Cannot add sources to response if not using docs in context')
+        if self.num_relevant_docs < 1:
+            raise ValueError('num_relevant_docs must be greater than 0')
         self.log()
 
     def asdict(self) -> Dict:

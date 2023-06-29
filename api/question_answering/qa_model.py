@@ -158,12 +158,14 @@ class QAModel():
         use_docs_for_context: bool = True,
         add_sources_to_response: bool = True,
         use_messages_for_context: bool = True,
+        num_relevant_docs: int = 3,
         debug: bool = False
     ):
         super().__init__()
         self.use_docs_for_context = use_docs_for_context
         self.add_sources_to_response = add_sources_to_response
         self.use_messages_for_context = use_messages_for_context
+        self.num_relevant_docs = num_relevant_docs
         self.debug = debug
 
         if 'local_models/' in llm_model_id:
@@ -196,14 +198,14 @@ class QAModel():
         self.llm_chain = LLMChain(prompt=prompt, llm=self.llm_model)
 
         if self.use_docs_for_context:
-            logger.info('Downloading index')
+            logger.info(f'Downloading {index_repo_id}')
             snapshot_download(
                 repo_id=index_repo_id,
                 allow_patterns=['*.faiss', '*.pkl'], 
                 repo_type='dataset',
                 local_dir='index/'
             )
-
+            logger.info('Loading embedding model')
             embed_instruction = "Represent the Hugging Face library documentation"
             query_instruction = "Query the most relevant piece of information from the Hugging Face documentation"
             embedding_model = HuggingFaceInstructEmbeddings(
@@ -238,7 +240,7 @@ class QAModel():
             logger.info(f'Retriving documents')
             relevant_docs = self.knowledge_index.similarity_search(
                 query=messages_context+question,
-                k=3
+                k=self.num_relevant_docs
             )
             context += '\nExtracted documents:\n'
             context += "".join([doc.page_content for doc in relevant_docs])
