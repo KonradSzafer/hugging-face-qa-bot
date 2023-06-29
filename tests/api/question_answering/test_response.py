@@ -1,11 +1,11 @@
 import pytest
-from bot.question_answering.response import Response
+from api.question_answering.response import Response
 
 
-def test_set_response():
+def test_set_answer():
     r = Response()
-    r.set_response('Hello, World!')
-    assert r.get_response() == 'Hello, World!'
+    r.set_answer('Hello, World!')
+    assert r.get_answer() == 'Hello, World!'
 
 
 def test_set_sources():
@@ -22,6 +22,6 @@ def test_get_sources_as_text():
 
 def test_get_response_include_sources():
     r = Response()
-    r.set_response('Hello, World!')
+    r.set_answer('Hello, World!')
     r.set_sources(['source1', 'source2'])
-    assert len(r.get_response(include_sources=True)) > len('Hello, World!')
+    assert len(r.get_answer(include_sources=True)) > len('Hello, World!')
