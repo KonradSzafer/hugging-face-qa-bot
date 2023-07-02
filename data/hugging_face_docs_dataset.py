@@ -3,10 +3,15 @@ import json
 import os
 import re
 import subprocess
+from typing import List
+
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
 from markdown import markdown
+import nbformat
+from nbconvert import MarkdownExporter
+from nbconvert.preprocessors import Preprocessor, ClearOutputPreprocessor
 from tqdm import tqdm
 
 
@@ -15,7 +20,7 @@ VALIDATE_URLS = False
 
 def download_repositories(repo_urls_file: str, repo_dir: str):
     """
-    Download the Hugging Face repositories.
+    Downloads the Hugging Face repositories.
     """
     if not os.path.exists(repo_dir):
         os.makedirs(repo_dir)
@@ -28,7 +33,44 @@ def download_repositories(repo_urls_file: str, repo_dir: str):
                 print("Command failed with error:", e.stderr)
 
 
-def extract_markdown_from_directories(repo_urls_file: str, repo_dir: str, docs_dir: str):
+class EmptyCellPreprocessor(Preprocessor):
+    def preprocess_cell(self, cell, resources, index):
+        if cell.source.strip() == '':
+            cell.source = ''
+            cell.cell_type = 'raw'
+        return cell, resources
+
+
+def convert_notebook_to_txt(filename: str):
+    """
+    Converts a notebook to a markdown file.
+    """
+    with open(filename) as f:
+        notebook = nbformat.read(f, as_version=4)
+    # id validation error fix
+    for cell in notebook['cells']:
+        cell['id'] = str(cell['id'])
+
+    clear_output = ClearOutputPreprocessor()
+    notebook, resources = clear_output.preprocess(notebook, {})
+
+    exporter = MarkdownExporter()
+    exporter.register_preprocessor(EmptyCellPreprocessor, enabled=True)
+    output_notebook_text, resources = exporter.from_notebook_node(notebook)
+
+    new_filename = filename.replace('.ipynb', '_ipynb.txt')
+    with open(new_filename, 'w') as f:
+        f.write(output_notebook_text)
+    return new_filename
+
+
+def extract_files_from_directories(
+    repo_urls_file: str,
+    repo_dir: str,
+    docs_dir: str,
+    files_extensions: List[str]
+) -> None:
+
     """
     This function reads markdown and markdownx files from the repositories directory,
     filters out non-English files, and adds the source GitHub URL as the first line of each file.
@@ -37,9 +79,13 @@ def extract_markdown_from_directories(repo_urls_file: str, repo_dir: str, docs_d
     languages = pd.read_csv("language-codes.csv").loc[:,"alpha2"].tolist()
     languages.remove("en")
 
-    files = glob.glob(repo_dir + "**/*.md", recursive=True)
-    files += glob.glob(repo_dir + "**/*.mdx", recursive=True)
-    print(f'Found {len(files)} md/mdx files')
+    files = [
+        filename
+        for extension in files_extensions
+        for filename in glob.glob(repo_dir + f"**/*{extension}", recursive=True)
+    ]
+    print(f'Used extensions: {", ".join(files_extensions)}')
+    print(f'Found {len(files)} files')
 
     repo_urls = []
     with open(repo_urls_file, "r") as f:
@@ -54,7 +100,7 @@ def extract_markdown_from_directories(repo_urls_file: str, repo_dir: str, docs_d
                 break
         else:
             filtered_files.append(filename)
-    print(f'Found {len(filtered_files)} md/mdx files in English')
+    print(f'Found {len(filtered_files)} files in English')
 
     # generate a GitHub URL for a file based on its name and a list of possible repository URLs
     def get_github_url(filename: str, repo_urls: str, repo_dir: str) -> str:
@@ -93,16 +139,23 @@ def extract_markdown_from_directories(repo_urls_file: str, repo_dir: str, docs_d
     for filename in tqdm(filtered_files):
         source_url = get_github_url(filename, repo_urls, repo_dir)
         data = f"source: {source_url}\n\n"
-        with open(filename, 'r') as f:
-            data += f.read()
-        output_filename = docs_dir + create_filename_from_path(filename, repo_dir)
-        with open(output_filename, 'w') as f:
-            f.write(data)
-        if not os.path.isfile(output_filename):
-            raise ValueError(f"Failed to create the output file: {output_filename}")
-        copied_files.append(output_filename)
+        # convert jupyter notebooks to txt files
+        try:
+            if filename.endswith('.ipynb'):
+                filename = convert_notebook_to_txt(filename)
+            # rename and copy files
+            with open(filename, 'r') as f:
+                data += f.read()
+            output_filename = docs_dir + create_filename_from_path(filename, repo_dir)
+            with open(output_filename, 'w') as f:
+                f.write(data)
+            if not os.path.isfile(output_filename):
+                raise ValueError(f"Failed to create the output file: {output_filename}")
+            copied_files.append(output_filename)
+        except Exception as ex:
+            print(f'Failed to copy file {filename}: {ex}')
 
-    print(f'Successfully copied {len(set(copied_files))} unique files')
+    print(f'Successfully copied {len(set(copied_files))}/{len(filtered_files)} files')
 
 
 def markdown_cleaner(data: str):
@@ -130,4 +183,7 @@ if __name__ == '__main__':
     repo_dir = "./datasets/huggingface_repositories/"
     docs_dir = "./datasets/huggingface_docs/"
     download_repositories(repo_urls_file, repo_dir)
-    extract_markdown_from_directories(repo_urls_file, repo_dir, docs_dir)
+    extract_files_from_directories(
+        repo_urls_file, repo_dir, docs_dir,
+        files_extensions=['.md', '.mdx', '.ipynb']
+    )
