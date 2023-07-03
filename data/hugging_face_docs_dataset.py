@@ -26,6 +26,7 @@ def download_repositories(repo_urls_file: str, repo_dir: str):
         os.makedirs(repo_dir)
     with open(repo_urls_file, "r") as f:
         repositories_urls = json.load(f)["urls"]
+        print(f'Downloading {len(repositories_urls)} repositories')
         for url in repositories_urls:
             try:
                 subprocess.run(["git", "clone", url], cwd=repo_dir)
