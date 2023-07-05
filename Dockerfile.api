@@ -12,7 +12,6 @@ RUN pip install --upgrade pip && \
 
 WORKDIR /hugging-face-qa-bot
 COPY config/api/ config/api/
-COPY index/ index/
 COPY api/ api/
 
 EXPOSE 8000

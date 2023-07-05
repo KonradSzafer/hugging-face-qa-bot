@@ -203,7 +203,7 @@ class QAModel():
                 repo_id=index_repo_id,
                 allow_patterns=['*.faiss', '*.pkl'], 
                 repo_type='dataset',
-                local_dir='index/'
+                local_dir='indexes/run/'
             )
             logger.info('Loading embedding model')
             embed_instruction = "Represent the Hugging Face library documentation"
@@ -214,7 +214,7 @@ class QAModel():
                 query_instruction=query_instruction
             )
             logger.info('Loading index')
-            self.knowledge_index = FAISS.load_local(f"./index", embedding_model)
+            self.knowledge_index = FAISS.load_local(f"./indexes/run/", embedding_model)
 
 
     def get_answer(self, question: str, messages_context: str = '') -> Response:
