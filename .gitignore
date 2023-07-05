@@ -55,6 +55,7 @@ venv/
 
 # Project
 wandb/
+indexes/
 
 # Api
 api/question_answering/local_models
