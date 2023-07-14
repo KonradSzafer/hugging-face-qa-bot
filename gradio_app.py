@@ -1,14 +1,15 @@
 import gradio as gr
-from bot.config import Config
-from bot.logger import logger
-from bot.question_answering import LangChainModel
+from api.config import Config
+from api.logger import logger
+from api.question_answering import QAModel
+
 
 config = Config()
-model = LangChainModel(
+model = QAModel(
     llm_model_id=config.question_answering_model_id,
     embedding_model_id=config.embedding_model_id,
-    index_name=config.index_name,
-    use_docs_for_context=config.use_docs_in_context,
+    index_repo_id=config.index_repo_id,
+    use_docs_for_context=config.use_docs_for_context,
     add_sources_to_response=config.add_sources_to_response,
     use_messages_for_context=config.use_messages_in_context,
     debug=config.debug
@@ -29,4 +30,4 @@ with gr.Blocks() as demo:
 
     msg.submit(respond, [msg, chatbot], [msg, chatbot])
 
-demo.launch()
+demo.launch(share=False)
