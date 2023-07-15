@@ -13,7 +13,6 @@ from langchain.llms import HuggingFacePipeline
 from langchain.llms.base import LLM
 from langchain.embeddings import HuggingFaceEmbeddings, HuggingFaceHubEmbeddings, HuggingFaceInstructEmbeddings
 from langchain.vectorstores import FAISS
-from llama_cpp import Llama
 
 from api.logger import logger
 from api.question_answering.response import Response
@@ -21,10 +20,12 @@ from api.question_answering.response import Response
 
 class LocalBinaryModel(LLM):
     model_id: str = None
-    llm: Llama = None
+    llm: None = None
 
     def __init__(self, model_id: str = None):
         super().__init__()
+        from llama_cpp import Llama
+
         model_path = f'api/question_answering/{model_id}'
         if not os.path.exists(model_path):
             raise ValueError(f'{model_path} does not exist')
