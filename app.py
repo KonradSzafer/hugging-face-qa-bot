@@ -1,8 +1,11 @@
 import gradio as gr
+from dotenv import load_dotenv
 from api.config import Config
 from api.logger import logger
 from api.question_answering import QAModel
 
+
+load_dotenv(dotenv_path='config/api/.env')
 
 config = Config()
 model = QAModel(
