@@ -23,11 +23,11 @@ with gr.Blocks() as demo:
     def respond(message, chat_history):
         context = "".join(f"User: {msg} \nBot:{bot_msg}\n" for msg, bot_msg in chat_history)
         logger.info(f"Context: {context}")
-        answer = model.get_answer(message, context)
-        bot_message = answer.get_response() + answer.get_sources_as_text() + "\n"
+        response = model.get_response(message, context)
+        bot_message = response.get_answer() + response.get_sources_as_text() + "\n"
         chat_history.append((message, bot_message))
         return "", chat_history
 
     msg.submit(respond, [msg, chatbot], [msg, chatbot])
 
-demo.launch(share=False)
+demo.launch(share=True)

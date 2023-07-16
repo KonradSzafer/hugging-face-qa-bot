@@ -26,7 +26,7 @@ def get_answer(question: str, messgages_context: str):
         f"Received request with question: {question}" \
         f"and context: {messgages_context}"
     )
-    response = qa_model.get_answer(
+    response = qa_model.get_response(
         question=question,
         messages_context=messgages_context
     )

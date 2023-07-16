@@ -218,7 +218,7 @@ class QAModel():
             self.knowledge_index = FAISS.load_local(f"./indexes/run/", embedding_model)
 
 
-    def get_answer(self, question: str, messages_context: str = '') -> Response:
+    def get_response(self, question: str, messages_context: str = '') -> Response:
         """
         Generate an answer to the specified question.
 
