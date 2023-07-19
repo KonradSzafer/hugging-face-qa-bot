@@ -254,15 +254,15 @@ class QAModel():
         logger.info(f'Received answer')
 
         if self.debug:
+            logger.info('\n' + '=' * 100)
             sep = '\n' + '-' * 100
-            logger.info(sep)
+            logger.info(f'question len: {len(question)} {sep}')
+            logger.info(f'question: {question} {sep}')
+            logger.info(f'answer len: {len(response.get_answer())} {sep}')
+            logger.info(f'answer: {response.get_answer()} {sep}')
+            logger.info(f"{response.get_sources_as_text()} {sep}")
             logger.info(f'messages_contex: {messages_context} {sep}')
             logger.info(f'relevant_docs: {relevant_docs} {sep}')
-            sources_str = '\n'.join(response.get_sources())
-            logger.info(f"sources:\n{sources_str} {sep}")
             logger.info(f'context len: {len(context)} {sep}')
             logger.info(f'context: {context} {sep}')
-            logger.info(f'question len: {len(question)}')
-            logger.info(f'question: {question} {sep}')
-            logger.info(f'response: {response.get_answer()} {sep}')
         return response
