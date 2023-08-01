@@ -5,6 +5,8 @@
         "https://github.com/huggingface/datasets",
         "https://github.com/gradio-app/gradio",
         "https://github.com/huggingface/huggingface_hub",
+        "https://github.com/huggingface/peft",
+        "https://github.com/huggingface/blog",
         "https://github.com/huggingface/optimum",
         "https://github.com/huggingface/tokenizers",
         "https://github.com/huggingface/course",
