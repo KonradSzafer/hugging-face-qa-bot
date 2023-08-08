@@ -6,7 +6,7 @@ from langchain.vectorstores import FAISS
 
 
 snapshot_download(
-    repo_id='KonradSzafer/index',
+    repo_id='KonradSzafer/index-large-notebooks',
     allow_patterns=['*.faiss', '*.pkl'], 
     repo_type='dataset',
     local_dir='index/'
