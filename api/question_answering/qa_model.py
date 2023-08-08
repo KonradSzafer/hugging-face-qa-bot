@@ -74,6 +74,7 @@ class TransformersPipelineModel(LLM):
             model=model,
             tokenizer=tokenizer,
             max_new_tokens=2048,
+            eos_token_id=tokenizer.eos_token_id,
         )
 
     def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
