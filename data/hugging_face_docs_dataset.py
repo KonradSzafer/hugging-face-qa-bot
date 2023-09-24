@@ -59,7 +59,7 @@ def convert_notebook_to_txt(filename: str):
     exporter.register_preprocessor(EmptyCellPreprocessor, enabled=True)
     output_notebook_text, resources = exporter.from_notebook_node(notebook)
 
-    new_filename = filename.replace('.ipynb', '_ipynb.txt')
+    new_filename = filename.replace('.ipynb', '_ipynb.md')
     with open(new_filename, 'w') as f:
         f.write(output_notebook_text)
     return new_filename
