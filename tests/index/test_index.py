@@ -9,7 +9,7 @@ snapshot_download(
     repo_id='KonradSzafer/index-large-notebooks',
     allow_patterns=['*.faiss', '*.pkl'], 
     repo_type='dataset',
-    local_dir='index/'
+    local_dir='indexes/'
 )
 
 @pytest.fixture(scope="module")
@@ -25,7 +25,7 @@ def embedding_model() -> HuggingFaceInstructEmbeddings:
 
 @pytest.fixture(scope="module")
 def index_path() -> str:
-    return "index/"
+    return "indexes/"
 
 @pytest.fixture(scope="module")
 def index(embedding_model: HuggingFaceInstructEmbeddings, index_path: str):
