@@ -11,6 +11,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from langchain import PromptTemplate, HuggingFaceHub, LLMChain
 from langchain.llms import HuggingFacePipeline
 from langchain.llms.base import LLM
+from sentence_transformers import CrossEncoder
 from langchain.embeddings import HuggingFaceEmbeddings, HuggingFaceHubEmbeddings, HuggingFaceInstructEmbeddings
 from langchain.vectorstores import FAISS
 
@@ -161,6 +162,7 @@ class QAModel():
         add_sources_to_response: bool = True,
         use_messages_for_context: bool = True,
         num_relevant_docs: int = 3,
+        first_stage_docs: int = 50,
         debug: bool = False
     ):
         super().__init__()
@@ -168,6 +170,7 @@ class QAModel():
         self.add_sources_to_response = add_sources_to_response
         self.use_messages_for_context = use_messages_for_context
         self.num_relevant_docs = num_relevant_docs
+        self.first_stage_docs = first_stage_docs
         self.debug = debug
 
         if 'local_models/' in llm_model_id:
@@ -217,6 +220,7 @@ class QAModel():
             )
             logger.info('Loading index')
             self.knowledge_index = FAISS.load_local(f"./indexes/run/", embedding_model)
+            self.reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-12-v2")
 
 
     def get_response(self, question: str, messages_context: str = '') -> Response:
@@ -242,8 +246,13 @@ class QAModel():
             logger.info(f'Retriving documents')
             relevant_docs = self.knowledge_index.similarity_search(
                 query=messages_context+question,
-                k=self.num_relevant_docs
+                k=self.first_stage_docs
             )
+            cross_encoding_predictions = self.reranker.predict(
+                [(messages_context+question, doc.page_content) for doc in relevant_docs]
+            )
+            relevant_docs = [doc for _, doc in sorted(zip(cross_encoding_predictions, relevant_docs), reverse=True)]
+            relevant_docs = relevant_docs[:self.num_relevant_docs]
             context += '\nExtracted documents:\n'
             context += "".join([doc.page_content for doc in relevant_docs])
             metadata = [doc.metadata for doc in relevant_docs]
