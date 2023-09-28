@@ -248,11 +248,12 @@ class QAModel():
                 query=messages_context+question,
                 k=self.first_stage_docs
             )
+            relevant_instructor = relevant_docs[:int(self.num_relevant_docs/2)]
             cross_encoding_predictions = self.reranker.predict(
                 [(messages_context+question, doc.page_content) for doc in relevant_docs]
             )
-            relevant_docs = [doc for _, doc in sorted(zip(cross_encoding_predictions, relevant_docs), reverse=True)]
-            relevant_docs = relevant_docs[:self.num_relevant_docs]
+            relevant_docs = [doc for _, doc in sorted(zip(cross_encoding_predictions, relevant_docs), reverse=True, key = lambda x: x[0])]
+            relevant_docs = relevant_docs[:int(self.num_relevant_docs/2)] + relevant_instructor
             context += '\nExtracted documents:\n'
             context += "".join([doc.page_content for doc in relevant_docs])
             metadata = [doc.metadata for doc in relevant_docs]
