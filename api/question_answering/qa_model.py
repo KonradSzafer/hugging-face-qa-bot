@@ -2,18 +2,19 @@ import os
 import json
 import requests
 import subprocess
+from typing import Mapping, Optional, Any
+
 import torch
 import transformers
-from urllib.parse import quote
-from typing import Mapping, Optional, List, Any
-from huggingface_hub import snapshot_download
 from transformers import AutoTokenizer, AutoModelForCausalLM
+from huggingface_hub import snapshot_download
+from urllib.parse import quote
 from langchain import PromptTemplate, HuggingFaceHub, LLMChain
 from langchain.llms import HuggingFacePipeline
 from langchain.llms.base import LLM
-from sentence_transformers import CrossEncoder
 from langchain.embeddings import HuggingFaceEmbeddings, HuggingFaceHubEmbeddings, HuggingFaceInstructEmbeddings
 from langchain.vectorstores import FAISS
+from sentence_transformers import CrossEncoder
 
 from api.logger import logger
 from api.question_answering.response import Response
@@ -33,8 +34,7 @@ class LocalBinaryModel(LLM):
         self.model_id = model_id
         self.llm = Llama(model_path=model_path, n_ctx=4096)
 
-    def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
-        prompt = f'Q: {prompt} A: '
+    def _call(self, prompt: str, stop: Optional[list[str]] = None) -> str:
         output = self.llm(
             prompt,
             max_tokens=1024,
@@ -75,10 +75,12 @@ class TransformersPipelineModel(LLM):
             model=model,
             tokenizer=tokenizer,
             max_new_tokens=2048,
+            torch_dtype=torch.bfloat16,
+            device_map="auto",
             eos_token_id=tokenizer.eos_token_id,
         )
 
-    def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
+    def _call(self, prompt: str, stop: Optional[list[str]] = None) -> str:
         output_text = self.pipeline(prompt)[0]['generated_text']
         output_text = output_text.replace(prompt+'\n', '')
         return output_text
@@ -103,7 +105,7 @@ class APIServedModel(LLM):
         self.model_url = model_url
         self.debug = debug
 
-    def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
+    def _call(self, prompt: str, stop: Optional[list[str]] = None) -> str:
         prompt_encoded = quote(prompt, safe='')
         url = f'{self.model_url}/?prompt={prompt_encoded}'
         if self.debug:
