@@ -158,6 +158,7 @@ class QAModel():
         llm_model_id: str,
         embedding_model_id: str,
         index_repo_id: str,
+        prompt_template: str,
         use_docs_for_context: bool = True,
         add_sources_to_response: bool = True,
         use_messages_for_context: bool = True,
@@ -189,12 +190,6 @@ class QAModel():
             self.llm_model = TransformersPipelineModel(
                 model_id=llm_model_id
             )
-
-        prompt_template = \
-            "### Instruction:\n" \
-            "Give an answer that contains all the necessary information for the question.\n" \
-            "If the context contains necessary information to answer question, use it to generate an appropriate response.\n" \
-            "{context}\n### Input:\n{question}\n### Response:"
 
         prompt = PromptTemplate(
             template=prompt_template,
@@ -251,7 +246,12 @@ class QAModel():
             cross_encoding_predictions = self.reranker.predict(
                 [(messages_context+question, doc.page_content) for doc in relevant_docs]
             )
-            relevant_docs = [doc for _, doc in sorted(zip(cross_encoding_predictions, relevant_docs), reverse=True)]
+            relevant_docs = [
+                doc for _, doc in sorted(
+                    zip(cross_encoding_predictions, relevant_docs),
+                    reverse=True, key = lambda x: x[0]
+                )
+            ]
             relevant_docs = relevant_docs[:self.num_relevant_docs]
             context += '\nExtracted documents:\n'
             context += "".join([doc.page_content for doc in relevant_docs])

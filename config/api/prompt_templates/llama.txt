@@ -1,0 +1,7 @@
+### Instruction:
+Give an answer that contains all the necessary information for the question.
+If the context contains necessary information to answer question, use it to generate an appropriate response.
+{context}
+### Input:
+{question}
+### Response:

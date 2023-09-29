@@ -1,0 +1,11 @@
+<s>[INST]
+
+<<SYS>>
+
+**CONTEXT FOR THE QUESTION**:
+{context}
+
+<</SYS>>
+
+**QUESTION**: {question}
+[/INST]

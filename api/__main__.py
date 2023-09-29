@@ -12,6 +12,7 @@ qa_model = QAModel(
     llm_model_id=config.question_answering_model_id,
     embedding_model_id=config.embedding_model_id,
     index_repo_id=config.index_repo_id,
+    prompt_template=config.prompt_template,
     use_docs_for_context=config.use_docs_for_context,
     add_sources_to_response=config.add_sources_to_response,
     use_messages_for_context=config.use_messages_in_context,

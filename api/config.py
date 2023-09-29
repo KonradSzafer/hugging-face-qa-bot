@@ -25,6 +25,7 @@ class Config:
     question_answering_model_id: str = get_env('QUESTION_ANSWERING_MODEL_ID')
     embedding_model_id: str = get_env('EMBEDDING_MODEL_ID')
     index_repo_id: str = get_env('INDEX_REPO_ID')
+    prompt_template_file: str = get_env('PROMPT_TEMPLATE_FILE')
     use_docs_for_context: bool = eval(get_env('USE_DOCS_FOR_CONTEXT', 'True'))
     add_sources_to_response: bool = eval(get_env('ADD_SOURCES_TO_RESPONSE', 'True'))
     use_messages_in_context: bool = eval(get_env('USE_MESSAGES_IN_CONTEXT', 'True'))
@@ -32,7 +33,14 @@ class Config:
     debug: bool = eval(get_env('DEBUG', 'True'))
 
     def __post_init__(self):
+        prompts_path = 'config/api/prompt_templates/'
+        with open(prompts_path + self.prompt_template_file + '.txt', 'r') as f:
+            self.prompt_template = f.read()
         # validate config
+        if 'context' not in self.prompt_template:
+            raise ValueError("Prompt Template does not contain the 'context' field.")
+        if 'question' not in self.prompt_template:
+            raise ValueError("Prompt Template does not contain the 'question' field.")
         if not self.use_docs_for_context and self.add_sources_to_response:
             raise ValueError('Cannot add sources to response if not using docs in context')
         if self.num_relevant_docs < 1:
