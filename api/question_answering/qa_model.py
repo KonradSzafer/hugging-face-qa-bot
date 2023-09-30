@@ -26,6 +26,7 @@ class LocalBinaryModel(LLM):
 
     def __init__(self, model_id: str = None):
         super().__init__()
+        # pip install llama_cpp_python==0.1.39
         from llama_cpp import Llama
 
         model_path = f'api/question_answering/{model_id}'
@@ -41,8 +42,7 @@ class LocalBinaryModel(LLM):
             stop=['Q:'],
             echo=False
         )
-        output_text = output['choices'][0]['text']
-        return output_text
+        return output['choices'][0]['text']
 
     @property
     def _identifying_params(self) -> Mapping[str, Any]:
@@ -74,10 +74,12 @@ class TransformersPipelineModel(LLM):
             "text-generation",
             model=model,
             tokenizer=tokenizer,
-            max_new_tokens=2048,
             torch_dtype=torch.bfloat16,
             device_map="auto",
             eos_token_id=tokenizer.eos_token_id,
+            pad_token_id=tokenizer.eos_token_id,
+            min_new_tokens=64,
+            max_new_tokens=2048,
         )
 
     def _call(self, prompt: str, stop: Optional[list[str]] = None) -> str:
@@ -113,8 +115,7 @@ class APIServedModel(LLM):
         try:
             response = requests.get(url, timeout=1200, verify=False)
             response.raise_for_status() 
-            output_text = json.loads(response.content)['output_text']
-            return output_text
+            return json.loads(response.content)['output_text']
         except Exception as err:
             logger.error(f'Error: {err}')
             return f'Error: {err}'
@@ -216,7 +217,7 @@ class QAModel():
                 query_instruction=query_instruction
             )
             logger.info('Loading index')
-            self.knowledge_index = FAISS.load_local(f"./indexes/run/", embedding_model)
+            self.knowledge_index = FAISS.load_local("./indexes/run/", embedding_model)
             self.reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-12-v2")
 
 
@@ -240,7 +241,7 @@ class QAModel():
             messages_context = f'\nPrevious questions and answers:\n{messages_context}'
             context += messages_context
         if self.use_docs_for_context:
-            logger.info(f'Retriving documents')
+            logger.info('Retriving documents')
             relevant_docs = self.knowledge_index.similarity_search(
                 query=messages_context+question,
                 k=self.first_stage_docs
@@ -260,10 +261,10 @@ class QAModel():
             metadata = [doc.metadata for doc in relevant_docs]
             response.set_sources(sources=[str(m['source']) for m in metadata])
 
-        logger.info(f'Running LLM chain')
+        logger.info('Running LLM chain')
         answer = self.llm_chain.run(question=question, context=context)
         response.set_answer(answer)
-        logger.info(f'Received answer')
+        logger.info('Received answer')
 
         if self.debug:
             logger.info('\n' + '=' * 100)

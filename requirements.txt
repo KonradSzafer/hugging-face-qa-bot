@@ -8,7 +8,6 @@ discord.py==2.2.2
 evaluate==0.4.0
 fastapi==0.98.0
 langchain==0.0.154
-llama_cpp_python==0.1.39
 nltk==3.8.1
 nbconvert==7.6.0
 nbformat==5.9.0
