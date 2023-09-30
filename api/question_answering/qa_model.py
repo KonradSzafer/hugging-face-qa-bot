@@ -235,19 +235,21 @@ class QAModel():
         """
 
         response = Response()
-        context = 'Give an answer that contains all the necessary information for the question.\n'
+        context = ''
         relevant_docs = ''
         if self.use_messages_for_context and messages_context:
             messages_context = f'\nPrevious questions and answers:\n{messages_context}'
             context += messages_context
         if self.use_docs_for_context:
             logger.info('Retriving documents')
+            # messages context is used for better retrival
+            retrival_query = messages_context + question 
             relevant_docs = self.knowledge_index.similarity_search(
-                query=messages_context+question,
+                query=retrival_query,
                 k=self.first_stage_docs
             )
             cross_encoding_predictions = self.reranker.predict(
-                [(messages_context+question, doc.page_content) for doc in relevant_docs]
+                [(retrival_query, doc.page_content) for doc in relevant_docs]
             )
             relevant_docs = [
                 doc for _, doc in sorted(
