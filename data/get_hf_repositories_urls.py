@@ -29,8 +29,8 @@ def get_repositories_names(token: str, min_stars: int) -> List[str]:
 
 
 def save_repositories_urls(repositories_names: List[str], output_filename: str):
-    urls = ['https://github.com/'+repo_name for repo_name in repositories_names]
-    data = {"urls": urls}
+    urls = [f'https://github.com/{repo_name}' for repo_name in repositories_names]
+    data = {'urls': urls}
     with open(output_filename, 'w') as f:
         json.dump(data, f, indent=4)
 
@@ -45,4 +45,5 @@ if __name__ == '__main__':
         'huggingface/hf-endpoints-documentation',
         'gradio-app/gradio'
     ]
+    print(f'Found {len(repositories)} repositories with at least {args.stars} stars')
     save_repositories_urls(repositories, 'datasets/hf_repositories_urls_scraped.json')

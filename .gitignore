@@ -63,3 +63,4 @@ api/question_answering/local_models
 # Data
 data/datasets/*
 !data/datasets/hf_repositories_urls.json
+!data/datasets/hf_repositories_urls_scraped.json

@@ -1,3 +1,5 @@
+torch
+torchvision
 transformers
 accelerate
 einops
@@ -12,6 +14,7 @@ nltk==3.8.1
 nbconvert==7.6.0
 nbformat==5.9.0
 numpy==1.24.2
+markdown==3.4.4
 pandas==1.5.3
 python-dotenv==1.0.0
 Requests==2.29.0
@@ -23,4 +26,3 @@ tqdm==4.64.1
 uvicorn==0.22.0
 wandb==0.15.0
 pytest==7.3.1
-torch==2.0.0
