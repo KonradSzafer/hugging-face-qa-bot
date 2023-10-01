@@ -79,7 +79,9 @@ class TransformersPipelineModel(LLM):
             eos_token_id=tokenizer.eos_token_id,
             pad_token_id=tokenizer.eos_token_id,
             min_new_tokens=64,
-            max_new_tokens=2048,
+            max_new_tokens=800,
+            temperature=0.5,
+            do_sample=True,
         )
 
     def _call(self, prompt: str, stop: Optional[list[str]] = None) -> str:
@@ -170,6 +172,7 @@ class QAModel():
         debug: bool = False
     ):
         super().__init__()
+        self.prompt_template = prompt_template
         self.use_docs_for_context = use_docs_for_context
         self.add_sources_to_response = add_sources_to_response
         self.use_messages_for_context = use_messages_for_context

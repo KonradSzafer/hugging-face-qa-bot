@@ -1,11 +1,6 @@
-<s>[INST]
-
 <<SYS>>
-
 **CONTEXT FOR THE QUESTION**:
 {context}
-
 <</SYS>>
 
-**QUESTION**: {question}
-[/INST]
+[INST] Respond for the user question as factualy as possible, using given context. [/INST] User: {question}

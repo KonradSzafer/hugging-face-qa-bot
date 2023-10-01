@@ -10,7 +10,7 @@ class Response:
         self.answer = answer
 
     def set_sources(self, sources: List) -> None:
-        self.sources = list(set([str(s) for s in sources]))
+        self.sources = list(set(map(str, sources)))
 
     def get_sources(self) -> List[str]:
         return self.sources
