@@ -56,6 +56,8 @@ venv/
 # Project
 wandb/
 indexes/
+*.out
+*.log
 
 # Api
 api/question_answering/local_models
