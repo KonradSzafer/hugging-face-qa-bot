@@ -22,14 +22,14 @@ qa_model = QAModel(
 
 
 @app.get("/")
-def get_answer(question: str, messgages_context: str):
+def get_answer(question: str, messages_context: str):
     logger.info(
         f"Received request with question: {question}" \
-        f"and context: {messgages_context}"
+        f"and context: {messages_context}"
     )
     response = qa_model.get_response(
         question=question,
-        messages_context=messgages_context
+        messages_context=messages_context
     )
     return {
         "answer": response.get_answer(),
