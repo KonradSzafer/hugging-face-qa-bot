@@ -65,4 +65,4 @@ data/datasets/*
 !data/datasets/hf_repositories_urls_scraped.json
 
 # Local models
-# qa_engine/local_models
+qa_engine/local_models

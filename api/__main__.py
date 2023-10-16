@@ -1,14 +1,12 @@
 import uvicorn
 from fastapi import FastAPI
 
-from api.config import Config
-from api.question_answering import QAModel
-from api.logger import logger
+from qa_engine import logger, Config, QAEngine
 
 
 config = Config()
 app = FastAPI()
-qa_model = QAModel(
+qa_engine = QAEngine(
     llm_model_id=config.question_answering_model_id,
     embedding_model_id=config.embedding_model_id,
     index_repo_id=config.index_repo_id,
@@ -21,21 +19,21 @@ qa_model = QAModel(
 )
 
 
-@app.get("/")
-def get_answer(question: str, messages_context: str):
+@app.get('/')
+def get_answer(question: str, messages_context: str = ''):
     logger.info(
-        f"Received request with question: {question}" \
-        f"and context: {messages_context}"
+        f'Received request with question: {question}' \
+        f'and context: {messages_context}'
     )
-    response = qa_model.get_response(
+    response = qa_engine.get_response(
         question=question,
         messages_context=messages_context
     )
     return {
-        "answer": response.get_answer(),
-        "sources": response.get_sources_as_text()
+        'answer': response.get_answer(),
+        'sources': response.get_sources_as_text()
     }
 
 
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+if __name__ == '__main__':
+    uvicorn.run(app, host='0.0.0.0', port=8000)
