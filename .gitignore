@@ -59,10 +59,10 @@ indexes/
 *.out
 *.log
 
-# Api
-api/question_answering/local_models
-
 # Data
 data/datasets/*
 !data/datasets/hf_repositories_urls.json
 !data/datasets/hf_repositories_urls_scraped.json
+
+# Local models
+# qa_engine/local_models
