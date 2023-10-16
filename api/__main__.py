@@ -14,9 +14,9 @@ qa_model = QAModel(
     index_repo_id=config.index_repo_id,
     prompt_template=config.prompt_template,
     use_docs_for_context=config.use_docs_for_context,
+    num_relevant_docs=config.num_relevant_docs,
     add_sources_to_response=config.add_sources_to_response,
     use_messages_for_context=config.use_messages_in_context,
-    num_relevant_docs=config.num_relevant_docs,
     debug=config.debug
 )
 

@@ -165,18 +165,18 @@ class QAModel():
         index_repo_id: str,
         prompt_template: str,
         use_docs_for_context: bool = True,
+        num_relevant_docs: int = 3,
         add_sources_to_response: bool = True,
         use_messages_for_context: bool = True,
-        num_relevant_docs: int = 3,
         first_stage_docs: int = 50,
         debug: bool = False
     ):
         super().__init__()
         self.prompt_template = prompt_template
         self.use_docs_for_context = use_docs_for_context
+        self.num_relevant_docs = num_relevant_docs
         self.add_sources_to_response = add_sources_to_response
         self.use_messages_for_context = use_messages_for_context
-        self.num_relevant_docs = num_relevant_docs
         self.first_stage_docs = first_stage_docs
         self.debug = debug
 

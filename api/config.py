@@ -21,20 +21,19 @@ def get_env(env_name: str, default = None) -> str:
 
 @dataclass
 class Config:
-    huggingface_token: str = get_env('HUGGINGFACEHUB_API_TOKEN')
     question_answering_model_id: str = get_env('QUESTION_ANSWERING_MODEL_ID')
     embedding_model_id: str = get_env('EMBEDDING_MODEL_ID')
     index_repo_id: str = get_env('INDEX_REPO_ID')
-    prompt_template_file: str = get_env('PROMPT_TEMPLATE_FILE')
+    prompt_template_name: str = get_env('PROMPT_TEMPLATE_NAME')
     use_docs_for_context: bool = eval(get_env('USE_DOCS_FOR_CONTEXT', 'True'))
+    num_relevant_docs: bool = eval(get_env('NUM_RELEVANT_DOCS', 3))
     add_sources_to_response: bool = eval(get_env('ADD_SOURCES_TO_RESPONSE', 'True'))
     use_messages_in_context: bool = eval(get_env('USE_MESSAGES_IN_CONTEXT', 'True'))
-    num_relevant_docs: bool = eval(get_env('NUM_RELEVANT_DOCS', 3))
     debug: bool = eval(get_env('DEBUG', 'True'))
 
     def __post_init__(self):
-        prompts_path = 'config/api/prompt_templates/'
-        with open(prompts_path + self.prompt_template_file + '.txt', 'r') as f:
+        prompt_template_file = f'config/api/prompt_templates/{self.prompt_template_name}.txt'
+        with open(prompt_template_file, 'r') as f:
             self.prompt_template = f.read()
         # validate config
         if 'context' not in self.prompt_template:

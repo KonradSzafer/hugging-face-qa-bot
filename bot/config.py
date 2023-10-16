@@ -23,7 +23,7 @@ def get_env(env_name: str, default = None) -> str:
 class Config:
     discord_token: str = get_env('DISCORD_TOKEN')
     qa_service_url: str = get_env('QA_SERVICE_URL')
-    add_sources_to_response: bool = eval(get_env('ADD_SOURCES_TO_RESPONSE', 'True'))
+    
     use_messages_in_context: bool = eval(get_env('USE_MESSEGES_IN_CONTEXT', 'True'))
     num_last_messages: int = int(get_env('NUM_LAST_MESSAGES', 2))
     use_names_in_context: bool = eval(get_env('USE_NAMES_IN_CONTEXT', 'False'))
