@@ -40,6 +40,9 @@ class Config:
     use_names_in_context: bool = eval(get_env('USE_NAMES_IN_CONTEXT', 'False', warn=False))
     enable_commands: bool = eval(get_env('ENABLE_COMMANDS', 'True', warn=False))
 
+    # App mode
+    app_mode: str = get_env('APP_MODE', '-', warn=False) # 'gradio' or 'discord'
+
     def __post_init__(self):
         prompt_template_file = f'config/prompt_templates/{self.prompt_template_name}.txt'
         with open(prompt_template_file, 'r') as f:
