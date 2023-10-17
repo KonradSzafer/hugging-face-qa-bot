@@ -1,50 +1,87 @@
-# Hugging Face Question Answering Bot
+# Hugging Face Documentation Question Answering System
 
-This repository focuses on the development of a Hugging Face question answering bot that assists users in creating their own ML solutions and troubleshooting technical issues related to Hugging Face libraries. Our solution combines an efficient context retrieval mechanism powered by FAISS with Stanford's Alpaca 7B language model to provide accurate and contextually relevant guidance derived from the Hugging Face documentation. The bot is designed to operate entirely locally on a consumer device, ensuring both accessibility and privacy. 
-
-# Purpose
-The Hugging Face Question Answering Bot is designed to help users quickly find solutions to common problems and questions related to Hugging Face libraries. Whether you're just getting started with ML or you're an experienced developer looking for advanced guidance, the bot can help you get the information you need to succeed.
+A multi-interface Q&A system that uses Hugging Face's LLM and Retrieval Augmented Generation (RAG) to deliver answers based on Hugging Face documentation. Operable as an API, Discord bot, or Gradio app, it also provides links to the documentation used to formulate each answer.
 
 # Example
 ![Example](./assets/example.png)
 
 # Table of Contents
-- [Setting up the bot](#setting-up-the-bot)
-    - [Running in a Docker](#running-in-a-docker)
-    - [Running in a Python](#running-in-a-python)
+- [Setting up](#setting-up)
+- [Running](#running)
+    - [Gradio](#gradio)
+    - [API](#api-serving)
+    - [Discord Bot](#discord-bot)
+- [Indexes](#indexes-list)
 - [Development instructions](#development-instructions)
-- [Datasets](#dataset-list)
 
-## Setting up the bot
-First, you need to provide the necessary environmental variables and API keys in the .env file. 
-- `HUGGINGFACEHUB_API_TOKEN` - API key for HF Hub
-- `DISCORD_TOKEN` - API key for the bot application
-- `QUESTION_ANSWERING_MODEL_ID` - an ID of a model to be queried from HF Hub (in case of inference through API)
-- `EMBEDDING_MODEL_ID` - an ID of embedding model, used to create and query index on the documents
-- `INDEX_NAME` - directory where the index files are present after creation
-- `USE_DOCS_IN_CONTEXT` - allow context extration from documents
-- `ADD_SOURCES_TO_RESPONSE` - show references to documents that were used as a context for a given query
-- `USE_MESSEGES_IN_CONTEXT` - allow to use chat history for conversational experience
-- `NUM_LAST_MESSAGES` - number of messages used for the previous feature
-- `USE_NAMES_IN_CONTEXT` - use names of users in context
-- `ENABLE_COMMANDS` - allow command, e.g. channel cleanup
-- `DEBUG` - provides additional logging
+## Setting up
 
-If you decide that you want to **run everthing locally** our current MVP recommends using Instructor large and Alpaca 7B with 4-bit quatization models. For this to properly work, you need to put the weights of the model in the `/bot/question_answering/` and set the `QUESTION_ANSWERING_MODEL_ID` variable to the name of the file that you just put in the aforementioned folder. Now, you should be able to run your own, local instance of the bot.
+To execute any of the available interfaces, specify the required parameters in the `.env` file based on the `.env.example` located in the `config/` directory. Alternatively, you can set these as environment variables:
 
-### Running in a Docker
-```bash
-docker build -t <container-name> .
-docker run <container-name>
-# or simply:
-./run_docker.sh
-```
+- `QUESTION_ANSWERING_MODEL_ID` - (str) A string that specifies either the model ID from the Hugging Face Hub or the directory containing the model weights
+- `EMBEDDING_MODEL_ID` - (str) embedding model ID from the Hugging Face Hub. We recommend using the `hkunlp/instructor-large`
+- `INDEX_REPO_ID` - (str) Repository ID from the Hugging Face Hub where the index is stored. List of the most actual indexes can be found in this section: [Indexes](#indexes-list)
+- `PROMPT_TEMPLATE_NAME` - (str) Name of the model prompt template used for question answering, templates are stored in the `config/api/prompt_templates` directory
+- `USE_DOCS_FOR_CONTEXT` - (bool) Use retrieved documents as a context for a given query
+- `NUM_RELEVANT_DOCS` - (int) Number of documents used for the previous feature
+- `ADD_SOURCES_TO_RESPONSE` - (bool) Include sources of the retrieved documents used as a context for a given query
+- `USE_MESSAGES_IN_CONTEXT` - (bool) Use chat history for conversational experience
+- `DEBUG` - (bool) Provides additional logging
 
-### Running in a Python
+Install the necessary dependencies from the requirements file:
+
 ```bash
 pip install -r requirements.txt
+```
+
+## Running
+
+### Gradio
+
+After completing all steps as described in the [Setting up](#setting-up) section, run:
+
+```bash
+python3 app.py
+```
+
+### API Serving
+
+By default, the API is served at `http://0.0.0.0:8000`. To launch it, complete all the steps outlined in the [Setting up](#setting-up) section, then execute the following command:
+
+```bash
+python3 -m api
+```
+
+### Discord Bot
+
+To interact with the system as a Discord bot, add additional required environment variables from the `Discord bot` section of the `.env.example` file in the `config/` directory.
+
+- `DISCORD_TOKEN` - (str) API key for the bot application
+- `QA_SERVICE_URL` - (str) URL of the API service. We recommend using: `http://0.0.0.0:8000`
+- `NUM_LAST_MESSAGES` - (int) Number of messages used for context in conversations
+- `USE_NAMES_IN_CONTEXT` - (bool) Include usernames in the conversation context
+- `ENABLE_COMMANDS` - (bool) Allow commands, e.g., channel cleanup
+- `DEBUG` - (bool) Provides additional logging
+
+After completing all steps, run:
+
+```bash
 python3 -m bot
 ```
+
+<!-- ### Running in a Docker
+
+Tu run API and bot in a Docker container, run the following command:
+
+```bash
+./run_docker.sh
+``` -->
+
+## Indexes List
+
+The following list contains the most current indexes that can be used for the system:
+- [All Hugging Face repositories over 50 Stars - 512-Character Chunks](https://huggingface.co/datasets/KonradSzafer/index-instructor-large-512-m512-all_repos_above_50_stars)
+- [All Hugging Face repositories over 50 Stars - 812-Character Chunks](KonradSzafer/index-instructor-large-812-m512-all_repos_above_50_stars)
 
 ## Development Instructions
 
@@ -70,11 +107,4 @@ To run unit tests, you can use the following command:
 
 ```bash
 pytest -o "testpaths=tests" --noconftest
-``` 
-
-## Dataset List
-
-Below is a list of the datasets used during development:
-- [Stack Overflow - Python](https://huggingface.co/datasets/KonradSzafer/stackoverflow_python_preprocessed)
-- [Stack Overflow - Linux](https://huggingface.co/datasets/KonradSzafer/stackoverflow_linux)
-- [Hugging Face Documentation](https://huggingface.co/docs)
+```
