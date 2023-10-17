@@ -1,18 +1,19 @@
 import os
 from dataclasses import dataclass, asdict
-from typing import Union
+from typing import Any, Union
 
 from qa_engine import logger
 
 
-def get_env(env_name: str, default = None) -> str:
+def get_env(env_name: str, default: Any = None, warn: bool = True) -> str:
     env = os.getenv(env_name)
     if not env:
         if default:
-            logger.warning(
-                f'Environment variable {env_name} not found.' \
-                f'Using the default value: {default}.'
-            )
+            if warn:
+                logger.warning(
+                    f'Environment variable {env_name} not found.' \
+                    f'Using the default value: {default}.'
+                )
             return default
         else:
             raise ValueError(f'Cannot parse: {env_name}')
@@ -22,6 +23,7 @@ def get_env(env_name: str, default = None) -> str:
 
 @dataclass
 class Config:
+    # QA Engine config
     question_answering_model_id: str = get_env('QUESTION_ANSWERING_MODEL_ID')
     embedding_model_id: str = get_env('EMBEDDING_MODEL_ID')
     index_repo_id: str = get_env('INDEX_REPO_ID')
@@ -31,6 +33,13 @@ class Config:
     add_sources_to_response: bool = eval(get_env('ADD_SOURCES_TO_RESPONSE', 'True'))
     use_messages_in_context: bool = eval(get_env('USE_MESSAGES_IN_CONTEXT', 'True'))
     debug: bool = eval(get_env('DEBUG', 'True'))
+
+    # Discord bot config - optional
+    discord_token: str = get_env('DISCORD_TOKEN', '', warn=False)
+    use_messages_in_context: bool = eval(get_env('USE_MESSEGES_IN_CONTEXT', 'True'), warn=False)
+    num_last_messages: int = int(get_env('NUM_LAST_MESSAGES', 2), warn=False)
+    use_names_in_context: bool = eval(get_env('USE_NAMES_IN_CONTEXT', 'False'), warn=False)
+    enable_commands: bool = eval(get_env('ENABLE_COMMANDS', 'True'), warn=False)
 
     def __post_init__(self):
         prompt_template_file = f'config/prompt_templates/{self.prompt_template_name}.txt'
