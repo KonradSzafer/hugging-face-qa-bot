@@ -1,5 +1,5 @@
 import pytest
-from api.question_answering.response import Response
+from qa_engine.response import Response
 
 
 def test_set_answer():
