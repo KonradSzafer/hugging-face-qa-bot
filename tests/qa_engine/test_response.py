@@ -2,11 +2,7 @@ import os
 import pytest
 import importlib
 
-# Dynamically import the Response class to not initialize the config
-spec = importlib.util.spec_from_file_location('response', 'qa_engine/response.py')
-module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(module)
-Response = module.Response
+from qa_engine.response import Response
 
 
 def test_set_answer():
