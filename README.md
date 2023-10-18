@@ -38,7 +38,7 @@ pip install -r requirements.txt
 
 ### Gradio
 
-After completing all steps as described in the [Setting up](#setting-up) section, run:
+After completing all steps as described in the [Setting up](#setting-up) section, specify the `APP_MODE` environment variable as `gradio` and run the following command:
 
 ```bash
 python3 app.py
@@ -68,6 +68,8 @@ After completing all steps, run:
 ```bash
 python3 -m bot
 ```
+
+To host bot on Hugging Face Spaces, specify the `APP_MODE` environment variable as `discord`, and the bot will be run automatically from the `app.py` file.
 
 <!-- ### Running in a Docker
 
