@@ -4,6 +4,8 @@ from api.config import Config
 from api.logger import logger
 from api.question_answering import QAModel
 import time
+import wandb
+import json
 
 
 load_dotenv(dotenv_path='config/api/.env')
@@ -25,25 +27,25 @@ ANSWERS_FILENAME = 'data/benchmark/answers.json'
 
 
 def main():
-    benchmark_name = \
-        f'model: {config.question_answering_model_id}' \
-        f'index: {config.index_repo_id}'
-
+    filtered_config = config.asdict()
+    disallowed_config_keys = ["DISCORD_TOKEN", "NUM_LAST_MESSAGES", "USE_NAMES_IN_CONTEXT", "ENABLE_COMMANDS", "APP_MODE"]
+    for key in disallowed_config_keys:
+        filtered_config.pop(key, None)
     wandb.init(
         project='HF-Docs-QA',
-        name=f'model: {config.question_answering_model_id}',
+        name=f'Model benchmarking',
         mode='run', # run/disabled
-        config=config.asdict()
+        config=filtered_config
     )
-    # log config to wandb
 
     with open(QUESTIONS_FILENAME, 'r') as f: # json
         questions = f.readlines()
 
     with open(ANSWERS_FILENAME, 'w') as f:
+        table = wandb.Table(columns=["answer", "sources", "time"])
         for q in questions:
             question = q['question']
-            messages_contex = q['messages_context']
+            messages_context = q['messages_context']
 
             t_start = time.perf_counter()
             response = model.get_response(
@@ -51,13 +53,19 @@ def main():
                 messages_context=messages_context
             )
             t_end = time.perf_counter()
-            # write to json
             {
                 "answer": response.get_answer(),
                 "sources": response.get_sources_as_text(),
                 'time': t_end - t_start
             }
-
+            f.write(json.dumps(response))
+            table.add_data(
+                response.get_answer(),
+                response.get_sources_as_text(),
+                t_end - t_start
+            )
+        wandb.log({"answers": table})
+    wandb.finish()
 
 if __name__ == '__main__':
     main()
