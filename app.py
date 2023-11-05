@@ -2,6 +2,7 @@ import gradio as gr
 
 from qa_engine import logger, Config, QAEngine
 from discord_bot import DiscordClient
+import threading
 
 
 config = Config()
@@ -35,7 +36,7 @@ def gradio_interface():
     demo.launch(share=True)
 
 
-def discord_bot():
+def discord_bot_inference_thread():
     client = DiscordClient(
         qa_engine=qa_engine,
         num_last_messages=config.num_last_messages,
@@ -43,9 +44,16 @@ def discord_bot():
         enable_commands=config.enable_commands,
         debug=config.debug
     )
+    client.run(config.discord_token)
+
+def discord_bot():
+    thread = threading.Thread(target=discord_bot_inference_thread)
+    thread.start()
     with gr.Blocks() as demo:
         gr.Markdown(f'Discord bot is running.')
-        client.run(config.discord_token)
+    demo.queue(concurrency_count=100)
+    demo.queue(max_size=100)
+    demo.launch()
 
 
 if __name__ == '__main__':
