@@ -1,8 +1,10 @@
+import threading
+
 import gradio as gr
 
 from qa_engine import logger, Config, QAEngine
 from discord_bot import DiscordClient
-import threading
+
 
 
 config = Config()
