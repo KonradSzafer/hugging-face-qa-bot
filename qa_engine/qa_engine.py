@@ -18,6 +18,7 @@ from sentence_transformers import CrossEncoder
 
 from qa_engine import logger
 from qa_engine.response import Response
+from qa_engine.mocks import MockLocalBinaryModel
 
 
 class LocalBinaryModel(LLM):
@@ -191,6 +192,9 @@ class QAEngine():
                 model_url=llm_model_id.replace('api_models/', ''),
                 debug=self.debug
             )
+        elif llm_model_id == 'mock':
+            logger.info('using mock model')
+            self.llm_model = MockLocalBinaryModel()
         else:
             logger.info('using transformers pipeline model')
             self.llm_model = TransformersPipelineModel(
