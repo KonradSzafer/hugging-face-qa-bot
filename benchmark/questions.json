@@ -1,0 +1,38 @@
+[
+    {
+        "question": "How to create audio dataset with Hugging Face?",
+        "messages_context": " "
+    },
+    {
+        "question": "I want to check if 2 sentences are similar semantically. How can I do it?",
+        "messages_context": " "
+    },
+    {
+        "question": "What are the benefits of Gradio?",
+        "messages_context": " "
+    },
+    {
+        "question": "How to deploy a text-to-image model?",
+        "messages_context": " "
+    },
+    {
+        "question": "Does Hugging Face offer any distributed training assistance? followup: Can you give me an example setup of it?",
+        "messages_context": " "
+    },
+    {
+        "question": "I want to detect cars on video recording. How should I do it and what models do you recommend?",
+        "messages_context": " "
+    },
+    {
+        "question": "Is there any tool for evaluating models in Hugging Face? followup: Can you give me an example setup of it?",
+        "messages_context": " "
+    },
+    {
+        "question": "What are some advantages of the Hugging Face Hub?",
+        "messages_context": " "
+    },
+    {
+        "question": "How would I use a model in 8 bit in transformers?",
+        "messages_context": " "
+    }
+]
