@@ -33,6 +33,7 @@ def main():
 
     wandb.init(
         project='HF-Docs-QA',
+        entity='hf-qa-bot',
         name=f'{config.question_answering_model_id} - {config.embedding_model_id} - {config.index_repo_id}',
         mode='run', # run/disabled
         config=filtered_config
