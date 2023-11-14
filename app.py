@@ -35,7 +35,7 @@ def gradio_interface():
             return '', chat_history
 
         msg.submit(respond, [msg, chatbot], [msg, chatbot])
-    demo.launch(share=True)
+    demo.launch()
 
 
 def discord_bot_inference_thread():
