@@ -228,6 +228,33 @@ class QAEngine():
             self.reranker = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-12-v2')
 
 
+    @staticmethod
+    def _preprocess_question(question: str) -> str:
+        if question[-1] != '?':
+            question += '?'
+        return question
+
+
+    @staticmethod
+    def _postprocess_answer(answer: str) -> str:
+        '''
+        Preprocess the answer by removing unnecessary sequences and stop sequences.
+        '''
+        REMOVE_SEQUENCES = [
+            'Factually: ', 'Answer: ', '<<SYS>>', '<</SYS>>', '[INST]', '[/INST]'
+        ]
+        STOP_SEQUENCES = [
+            '\nUser:', '\nYou:'
+        ]
+        for seq in REMOVE_SEQUENCES:
+            answer = answer.replace(seq, '')
+        for seq in STOP_SEQUENCES:
+            if seq in answer:
+                answer = answer[:answer.index(seq)]
+        answer = answer.strip()
+        return answer
+
+
     def get_response(self, question: str, messages_context: str = '') -> Response:
         """
         Generate an answer to the specified question.
@@ -271,7 +298,9 @@ class QAEngine():
             response.set_sources(sources=[str(m['source']) for m in metadata])
 
         logger.info('Running LLM chain')
-        answer = self.llm_chain.run(question=question, context=context)
+        question_processed = QAEngine._preprocess_question(question)
+        answer = self.llm_chain.run(question=question_processed, context=context)
+        answer = QAEngine._postprocess_answer(answer)
         response.set_answer(answer)
         logger.info('Received answer')
 
