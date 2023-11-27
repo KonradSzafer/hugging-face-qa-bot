@@ -1,10 +1,10 @@
 <|system|>Using the information contained in the context, 
 give a comprehensive answer to the question.
-If the answer is contained in the context, also report the source URL.
+Respond only to the question asked, response should be concise and relevant to the question.
 If the answer cannot be deduced from the context, do not give an answer.</s>
 <|user|>
 Context:
-  {{context}}
-  Question: {{question}}
+  {context}
+  Question: {question}
   </s>
 <|assistant|>

@@ -240,15 +240,15 @@ class QAEngine():
         '''
         Preprocess the answer by removing unnecessary sequences and stop sequences.
         '''
-        REMOVE_SEQUENCES = [
+        SEQUENCES_TO_REMOVE = [
             'Factually: ', 'Answer: ', '<<SYS>>', '<</SYS>>', '[INST]', '[/INST]'
         ]
-        STOP_SEQUENCES = [
-            '\nUser:', '\nYou:'
+        SEQUENCES_TO_STOP = [
+            'User:', 'You:', 'Question:'
         ]
-        for seq in REMOVE_SEQUENCES:
+        for seq in SEQUENCES_TO_REMOVE:
             answer = answer.replace(seq, '')
-        for seq in STOP_SEQUENCES:
+        for seq in SEQUENCES_TO_STOP:
             if seq in answer:
                 answer = answer[:answer.index(seq)]
         answer = answer.strip()
