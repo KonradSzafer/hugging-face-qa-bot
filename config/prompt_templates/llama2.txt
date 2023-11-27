@@ -1,6 +1,7 @@
-<<SYS>>
-**CONTEXT FOR THE QUESTION**:
-{context}
+<<SYS>>Using the information contained in the context, 
+give a comprehensive answer to the question.
+Respond only to the question asked, response should be concise and relevant to the question.
+If the answer cannot be deduced from the context, do not give an answer.
 <</SYS>>
 
-[INST] Respond for the user question as factualy as possible, using given context. [/INST] User: {question}
+[INST] Context: {context} [/INST] User: {question}

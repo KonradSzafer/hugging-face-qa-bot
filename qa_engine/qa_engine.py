@@ -300,8 +300,8 @@ class QAEngine():
         logger.info('Running LLM chain')
         question_processed = QAEngine._preprocess_question(question)
         answer = self.llm_chain.run(question=question_processed, context=context)
-        answer = QAEngine._postprocess_answer(answer)
-        response.set_answer(answer)
+        answer_postprocessed = QAEngine._postprocess_answer(answer)
+        response.set_answer(answer_postprocessed)
         logger.info('Received answer')
 
         if self.debug:
@@ -310,7 +310,8 @@ class QAEngine():
             logger.info(f'question len: {len(question)} {sep}')
             logger.info(f'question: {question} {sep}')
             logger.info(f'answer len: {len(response.get_answer())} {sep}')
-            logger.info(f'answer: {response.get_answer()} {sep}')
+            logger.info(f'answer original: {answer} {sep}')
+            logger.info(f'answer postprocessed: {response.get_answer()} {sep}')
             logger.info(f'{response.get_sources_as_text()} {sep}')
             logger.info(f'messages_contex: {messages_context} {sep}')
             logger.info(f'relevant_docs: {relevant_docs} {sep}')
