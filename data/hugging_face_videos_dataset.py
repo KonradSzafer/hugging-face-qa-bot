@@ -1,15 +1,19 @@
 import os
 import time
 
+import torch
 import scrapetube
 from pytube import YouTube
 from faster_whisper import WhisperModel
 from tqdm import tqdm
     
 
-model = WhisperModel("large-v3", device="cpu", compute_type="int8")
-# model = WhisperModel("large-v2", device="cpu")
-# model = WhisperModel("large-v2", device="cuda", compute_type="float16") # device_index=[1]
+if torch.cuda.is_available():
+    print("Using GPU and float16")
+    model = WhisperModel("large-v3", device="cuda", compute_type="float16", device_index=[1])
+else:
+    print("Using CPU and int8")
+    model = WhisperModel("large-v3", device="cpu", compute_type="int8")
 
 
 def get_videos_urls(channel_url: str) -> list[str]:
@@ -29,6 +33,14 @@ def get_audio_from_video(video_url: str, save_path: str) -> tuple[str, int, str,
     os.rename(out_file, new_file)
     print(f'Video length: {yt.length} seconds')
     return (video_url, new_file, yt.title, yt.length)
+
+
+def check_if_transcript_exists(video_name: str, transcripts_save_path: str) -> bool:
+    title = video_name.replace(' ', '_')
+    return any([
+        title in filename
+        for filename in os.listdir(transcripts_save_path)
+    ])
 
 
 def transcript_from_audio(audio_path: str) -> dict[str, list[str]]:
@@ -86,6 +98,9 @@ def main():
 
     print('Transcribing audio files')
     for video_url, filename, title, audio_length in tqdm(audio_data):
+        if check_if_transcript_exists(title, transcripts_save_path):
+            print(f'Transcript already exists for: {title}')
+            continue
         print(f'Transcribing: {title}')
         start_time = time.time()
         segments = transcript_from_audio(filename)
