@@ -83,7 +83,6 @@ def main():
 
     print('Getting videos urls')
     videos_urls = get_videos_urls('https://www.youtube.com/@HuggingFace')
-    videos_urls = videos_urls[:1]
 
     print('Downloading audio files')
     audio_data = []
