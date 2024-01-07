@@ -1,0 +1,4 @@
+scrapetube==2.5.1
+pytube==15.0.0
+faster-whisper==0.10.0
+tqdm==4.66.1
