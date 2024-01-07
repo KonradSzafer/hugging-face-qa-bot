@@ -63,28 +63,44 @@ def merge_transcripts_segements(
 
 def main():
     audio_save_path = 'datasets/huggingface_audio/'
-    transcripts_save_path = 'datasets/transcripts/'
+    transcripts_save_path = 'datasets/huggingface_audio_transcribed/'
+    if not os.path.exists(audio_save_path):
+        os.makedirs(audio_save_path)
+    if not os.path.exists(transcripts_save_path):
+        os.makedirs(transcripts_save_path)
 
     print('Getting videos urls')
     videos_urls = get_videos_urls('https://www.youtube.com/@HuggingFace')
+    videos_urls = videos_urls[:1]
 
     print('Downloading audio files')
     audio_data = []
     for video_url in tqdm(videos_urls):
-        audio_data.append(
-            get_audio_from_video(video_url, save_path=audio_save_path)
-        )
+        try:
+            audio_data.append(
+                get_audio_from_video(video_url, save_path=audio_save_path)
+            )
+        except Exception as e:
+            print(f'Error downloading video: {video_url}')
+            print(e)
 
     print('Transcribing audio files')
     for video_url, filename, title, audio_length in tqdm(audio_data):
-        start_time = time.time()
         print(f'Transcribing: {title}')
+        start_time = time.time()
         segments = transcript_from_audio(filename)
         print(f'Transcription took {time.time() - start_time} seconds')
-        merged_segments = merge_transcripts_segements(segments, title)
+        merged_segments = merge_transcripts_segements(
+            segments,
+            title,
+            num_segments_to_merge=10
+        )
+        # save transcripts to separate files
+        title = title.replace(' ', '_')
         for segment, text in merged_segments.items():
             with open(f'{transcripts_save_path}{title}_{segment}.txt', 'w') as f:
-                f.write(f'source: {video_url}\n' + text)
+                video_url_with_time = f'{video_url}&t={float(segment.split("_")[0]):.0f}'
+                f.write(f'source: {video_url_with_time}\n\n' + text)
 
 
 if __name__ == '__main__':
