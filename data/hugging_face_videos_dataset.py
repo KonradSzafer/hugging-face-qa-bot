@@ -7,7 +7,9 @@ from faster_whisper import WhisperModel
 from tqdm import tqdm
     
 
-model = WhisperModel("large-v2")
+model = WhisperModel("large-v3", device="cpu", compute_type="int8")
+# model = WhisperModel("large-v2", device="cpu")
+# model = WhisperModel("large-v2", device="cuda", compute_type="float16") # device_index=[1]
 
 
 def get_videos_urls(channel_url: str) -> list[str]:
@@ -18,7 +20,7 @@ def get_videos_urls(channel_url: str) -> list[str]:
     ]
 
 
-def get_audio_from_video(video_url: str, save_path: str) -> tuple[str, int]:
+def get_audio_from_video(video_url: str, save_path: str) -> tuple[str, int, str, int]:
     yt = YouTube(video_url) 
     video = yt.streams.filter(only_audio=True).first()
     out_file = video.download(output_path=save_path) 
@@ -30,7 +32,7 @@ def get_audio_from_video(video_url: str, save_path: str) -> tuple[str, int]:
 
 
 def transcript_from_audio(audio_path: str) -> dict[str, list[str]]:
-    segments, info = model.transcribe(audio_path)
+    segments, info = model.transcribe(audio_path, beam_size=10)
     return list(segments)
 
 
@@ -65,27 +67,24 @@ def main():
 
     print('Getting videos urls')
     videos_urls = get_videos_urls('https://www.youtube.com/@HuggingFace')
-    videos_urls = videos_urls[:2]
 
     print('Downloading audio files')
-    audio_paths = []
+    audio_data = []
     for video_url in tqdm(videos_urls):
-        audio_paths.append((
-            video_url,
+        audio_data.append(
             get_audio_from_video(video_url, save_path=audio_save_path)
-        ))
+        )
 
     print('Transcribing audio files')
-    for video_url, audio_path in tqdm(audio_paths):
-        video_title = audio_path.split("/")[-1]
+    for video_url, filename, title, audio_length in tqdm(audio_data):
         start_time = time.time()
-        print(f'Transcribing: {video_title}')
-        segments = transcript_from_audio(audio_path)
+        print(f'Transcribing: {title}')
+        segments = transcript_from_audio(filename)
         print(f'Transcription took {time.time() - start_time} seconds')
-        print(segments)
-        merged_segments = merge_transcripts_segements(segments, video_title)
-        print(merged_segments)
-        # todo: save segments as separate files
+        merged_segments = merge_transcripts_segements(segments, title)
+        for segment, text in merged_segments.items():
+            with open(f'{transcripts_save_path}{title}_{segment}.txt', 'w') as f:
+                f.write(f'source: {video_url}\n' + text)
 
 
 if __name__ == '__main__':
