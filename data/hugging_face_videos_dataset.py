@@ -9,6 +9,7 @@ from tqdm import tqdm
     
 
 if torch.cuda.is_available():
+    # requires: conda install -c anaconda cudnn
     print("Using GPU and float16")
     model = WhisperModel("large-v3", device="cuda", compute_type="float16", device_index=[1])
 else:
