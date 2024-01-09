@@ -6,15 +6,22 @@ import scrapetube
 from pytube import YouTube
 from faster_whisper import WhisperModel
 from tqdm import tqdm
-    
+
+
+# Available models:
+# tiny.en, tiny, base.en, base, small.en, small, medium.en, medium
+# large-v1, large-v2, large-v3, large
+MODEL_NAME = "tiny.en"
+AUDIO_SAVE_PATH = 'datasets/huggingface_audio/'
+TRANSCRIPTS_SAVE_PATH = 'datasets/huggingface_audio_transcribed/'
 
 if torch.cuda.is_available():
     # requires: conda install -c anaconda cudnn
-    print("Using GPU and float16")
-    model = WhisperModel("large-v3", device="cuda", compute_type="float16", device_index=[1])
+    print(f"Using {MODEL_NAME} on GPU and float16")
+    model = WhisperModel(MODEL_NAME, device="cuda", compute_type="float16", device_index=[0])
 else:
-    print("Using CPU and int8")
-    model = WhisperModel("large-v3", device="cpu", compute_type="int8")
+    print(f"Using {MODEL_NAME} on CPU and int8")
+    model = WhisperModel(MODEL_NAME, device="cpu", compute_type="int8")
 
 
 def get_videos_urls(channel_url: str) -> list[str]:
@@ -26,21 +33,25 @@ def get_videos_urls(channel_url: str) -> list[str]:
 
 
 def get_audio_from_video(video_url: str, save_path: str) -> tuple[str, int, str, int]:
-    yt = YouTube(video_url) 
-    video = yt.streams.filter(only_audio=True).first()
-    out_file = video.download(output_path=save_path) 
-    base, ext = os.path.splitext(out_file)
-    new_file = base.replace(" ", "_") + ".mp3"
-    os.rename(out_file, new_file)
-    print(f'Video length: {yt.length} seconds')
-    return (video_url, new_file, yt.title, yt.length)
+    yt = YouTube(video_url)
+    if check_if_file_exists(yt.title, save_path):
+        print(f'Audio already exists for: {yt.title}')
+        return (video_url, yt.title.replace(" ", "_")+".mp3", yt.title, yt.length)
+    else:
+        video = yt.streams.filter(only_audio=True).first()
+        out_file = video.download(output_path=save_path) 
+        base, ext = os.path.splitext(out_file)
+        new_file = base.replace(" ", "_") + ".mp3"
+        os.rename(out_file, new_file)
+        print(f'Video length: {yt.length} seconds')
+        return (video_url, new_file, yt.title, yt.length)
 
 
-def check_if_transcript_exists(video_name: str, transcripts_save_path: str) -> bool:
-    title = video_name.replace(' ', '_')
+def check_if_file_exists(filename: str, save_path: str) -> bool:
+    title = filename.replace(' ', '_')
     return any([
-        title in filename
-        for filename in os.listdir(transcripts_save_path)
+        title in filename_
+        for filename_ in os.listdir(save_path)
     ])
 
 
@@ -75,12 +86,10 @@ def merge_transcripts_segements(
 
 
 def main():
-    audio_save_path = 'datasets/huggingface_audio/'
-    transcripts_save_path = 'datasets/huggingface_audio_transcribed/'
-    if not os.path.exists(audio_save_path):
-        os.makedirs(audio_save_path)
-    if not os.path.exists(transcripts_save_path):
-        os.makedirs(transcripts_save_path)
+    if not os.path.exists(AUDIO_SAVE_PATH):
+        os.makedirs(AUDIO_SAVE_PATH)
+    if not os.path.exists(TRANSCRIPTS_SAVE_PATH):
+        os.makedirs(TRANSCRIPTS_SAVE_PATH)
 
     print('Getting videos urls')
     videos_urls = get_videos_urls('https://www.youtube.com/@HuggingFace')
@@ -90,7 +99,7 @@ def main():
     for video_url in tqdm(videos_urls):
         try:
             audio_data.append(
-                get_audio_from_video(video_url, save_path=audio_save_path)
+                get_audio_from_video(video_url, save_path=AUDIO_SAVE_PATH)
             )
         except Exception as e:
             print(f'Error downloading video: {video_url}')
@@ -98,7 +107,7 @@ def main():
 
     print('Transcribing audio files')
     for video_url, filename, title, audio_length in tqdm(audio_data):
-        if check_if_transcript_exists(title, transcripts_save_path):
+        if check_if_file_exists(title, TRANSCRIPTS_SAVE_PATH):
             print(f'Transcript already exists for: {title}')
             continue
         print(f'Transcribing: {title}')
@@ -113,7 +122,7 @@ def main():
         # save transcripts to separate files
         title = title.replace(' ', '_')
         for segment, text in merged_segments.items():
-            with open(f'{transcripts_save_path}{title}_{segment}.txt', 'w') as f:
+            with open(f'{TRANSCRIPTS_SAVE_PATH}{title}_{segment}.txt', 'w') as f:
                 video_url_with_time = f'{video_url}&t={float(segment.split("_")[0]):.0f}'
                 f.write(f'source: {video_url_with_time}\n\n' + text)
 
