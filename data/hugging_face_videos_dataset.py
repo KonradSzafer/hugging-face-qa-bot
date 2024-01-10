@@ -11,17 +11,24 @@ from tqdm import tqdm
 # Available models:
 # tiny.en, tiny, base.en, base, small.en, small, medium.en, medium
 # large-v1, large-v2, large-v3, large
-MODEL_NAME = "tiny.en"
+MODEL_NAME = "large-v3"
 AUDIO_SAVE_PATH = 'datasets/huggingface_audio/'
 TRANSCRIPTS_SAVE_PATH = 'datasets/huggingface_audio_transcribed/'
 
 if torch.cuda.is_available():
     # requires: conda install -c anaconda cudnn
     print(f"Using {MODEL_NAME} on GPU and float16")
-    model = WhisperModel(MODEL_NAME, device="cuda", compute_type="float16", device_index=[0])
+    model = WhisperModel(MODEL_NAME, device="cuda", compute_type="float16", device_index=[5])
 else:
     print(f"Using {MODEL_NAME} on CPU and int8")
     model = WhisperModel(MODEL_NAME, device="cpu", compute_type="int8")
+
+
+def replace_unallowed_chars(filename: str) -> str:
+    unallowed_chars = [' ', '/', '\\', ':', '*', '?', '"', '<', '>', '|']
+    for char in unallowed_chars:
+        filename = filename.replace(char, '_')
+    return filename
 
 
 def get_videos_urls(channel_url: str) -> list[str]:
@@ -120,7 +127,7 @@ def main():
             num_segments_to_merge=10
         )
         # save transcripts to separate files
-        title = title.replace(' ', '_')
+        title = replace_unallowed_chars(title)
         for segment, text in merged_segments.items():
             with open(f'{TRANSCRIPTS_SAVE_PATH}{title}_{segment}.txt', 'w') as f:
                 video_url_with_time = f'{video_url}&t={float(segment.split("_")[0]):.0f}'
