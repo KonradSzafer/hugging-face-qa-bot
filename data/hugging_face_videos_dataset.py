@@ -1,4 +1,5 @@
 import os
+import re
 import time
 
 import torch
@@ -45,13 +46,15 @@ def get_audio_from_video(video_url: str, save_path: str) -> tuple[str, int, str,
         print(f'Audio already exists for: {yt.title}')
         return (video_url, yt.title.replace(" ", "_")+".mp3", yt.title, yt.length)
     else:
+        print(f'Downloading audio for: {yt.title}')
         video = yt.streams.filter(only_audio=True).first()
         out_file = video.download(output_path=save_path) 
         base, ext = os.path.splitext(out_file)
-        new_file = base.replace(" ", "_") + ".mp3"
-        os.rename(out_file, new_file)
+        new_filename = save_path + replace_unallowed_chars(yt.title) + '.mp3'
+        print(f'Saving audio to: {new_filename}')
+        os.rename(out_file, new_filename)
         print(f'Video length: {yt.length} seconds')
-        return (video_url, new_file, yt.title, yt.length)
+        return (video_url, new_filename, yt.title, yt.length)
 
 
 def check_if_file_exists(filename: str, save_path: str) -> bool:
@@ -65,6 +68,12 @@ def check_if_file_exists(filename: str, save_path: str) -> bool:
 def transcript_from_audio(audio_path: str) -> dict[str, list[str]]:
     segments, info = model.transcribe(audio_path, beam_size=10)
     return list(segments)
+
+
+def process_text(text: str) -> str:
+    text = text.strip()
+    text = re.sub('\s+', ' ', text)
+    return text
 
 
 def merge_transcripts_segements(
@@ -86,7 +95,7 @@ def merge_transcripts_segements(
 
         if (i + 1) % num_segments_to_merge == 0 or i == len(segments) - 1:
             key = f'{start_time:.2f}_{end_time:.2f}'
-            merged_segments[key] = temp_text.strip()
+            merged_segments[key] = process_text(temp_text)
             temp_text = ''
 
     return merged_segments
@@ -117,21 +126,25 @@ def main():
         if check_if_file_exists(title, TRANSCRIPTS_SAVE_PATH):
             print(f'Transcript already exists for: {title}')
             continue
-        print(f'Transcribing: {title}')
-        start_time = time.time()
-        segments = transcript_from_audio(filename)
-        print(f'Transcription took {time.time() - start_time} seconds')
-        merged_segments = merge_transcripts_segements(
-            segments,
-            title,
-            num_segments_to_merge=10
-        )
-        # save transcripts to separate files
-        title = replace_unallowed_chars(title)
-        for segment, text in merged_segments.items():
-            with open(f'{TRANSCRIPTS_SAVE_PATH}{title}_{segment}.txt', 'w') as f:
-                video_url_with_time = f'{video_url}&t={float(segment.split("_")[0]):.0f}'
-                f.write(f'source: {video_url_with_time}\n\n' + text)
+        try: 
+            print(f'Transcribing: {title}')
+            start_time = time.time()
+            segments = transcript_from_audio(filename)
+            print(f'Transcription took: {time.time() - start_time:.1f} seconds')
+            merged_segments = merge_transcripts_segements(
+                segments,
+                title,
+                num_segments_to_merge=10
+            )
+            # save transcripts to separate files
+            title = replace_unallowed_chars(title)
+            for segment, text in merged_segments.items():
+                with open(f'{TRANSCRIPTS_SAVE_PATH}{title}_{segment}.txt', 'w') as f:
+                    video_url_with_time = f'{video_url}&t={float(segment.split("_")[0]):.0f}'
+                    f.write(f'source: {video_url_with_time}\n\n' + text)
+        except Exception as e:
+            print(f'Error transcribing: {title}')
+            print(e)
 
 
 if __name__ == '__main__':
