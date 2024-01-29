@@ -98,33 +98,38 @@ class DiscordClient(discord.Client):
 
 
     async def on_message(self, message):
-        """
-        Callback function to be called when a message is received.
-
-        Args:
-            message (discord.Message): The received message.
-        """
-        if message.author == self.user:
-            return
-        if self.enable_commands and message.content.startswith('!'):
-            if message.content == '!clear':
-                await message.channel.purge()
+        if message.channel.id == 1162396480825462935:
+            """
+            Callback function to be called when a message is received.
+    
+            Args:
+                message (discord.Message): The received message.
+            """
+            if message.author == self.user:
                 return
-
-        last_messages = await self.get_last_messages(message)
-        context = '\n'.join(last_messages)
-
-        logger.info('Received message: {0.content}'.format(message))
-        response = self.qa_engine.get_response(
-            question=message.content,
-            messages_context=context
-        )
-        logger.info('Sending response: {0}'.format(response))
-        try:
-            await self.send_message(
-                message,
-                response.get_answer(),
-                response.get_sources_as_text()
+    
+            """
+            if self.enable_commands and message.content.startswith('!'):
+                if message.content == '!clear':
+                    await message.channel.purge()
+                    return        
+            """
+    
+    
+            last_messages = await self.get_last_messages(message)
+            context = '\n'.join(last_messages)
+    
+            logger.info('Received message: {0.content}'.format(message))
+            response = self.qa_engine.get_response(
+                question=message.content,
+                messages_context=context
             )
-        except Exception as e:
-            logger.error('Failed to send response: {0}'.format(e))
+            logger.info('Sending response: {0}'.format(response))
+            try:
+                await self.send_message(
+                    message,
+                    response.get_answer(),
+                    response.get_sources_as_text()
+                )
+            except Exception as e:
+                logger.error('Failed to send response: {0}'.format(e))
