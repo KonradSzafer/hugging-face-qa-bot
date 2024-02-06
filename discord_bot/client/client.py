@@ -31,6 +31,7 @@ class DiscordClient(discord.Client):
     def __init__(
         self,
         qa_engine: QAEngine,
+        channel_ids: list[int] = [],
         num_last_messages: int = 5,
         use_names_in_context: bool = True,
         enable_commands: bool = True,
@@ -45,6 +46,7 @@ class DiscordClient(discord.Client):
             'The number of last messages in context should be at least 1'
 
         self.qa_engine: QAEngine = qa_engine
+        self.channel_ids: list[int] = channel_ids
         self.num_last_messages: int = num_last_messages
         self.use_names_in_context: bool = use_names_in_context
         self.enable_commands: bool = enable_commands
@@ -98,38 +100,34 @@ class DiscordClient(discord.Client):
 
 
     async def on_message(self, message):
-        if message.channel.id == 1162396480825462935:
-            """
-            Callback function to be called when a message is received.
-    
-            Args:
-                message (discord.Message): The received message.
-            """
-            if message.author == self.user:
-                return
-    
-            """
-            if self.enable_commands and message.content.startswith('!'):
-                if message.content == '!clear':
-                    await message.channel.purge()
-                    return        
-            """
-    
-    
-            last_messages = await self.get_last_messages(message)
-            context = '\n'.join(last_messages)
-    
-            logger.info('Received message: {0.content}'.format(message))
-            response = self.qa_engine.get_response(
-                question=message.content,
-                messages_context=context
+
+        if self.channel_ids and message.channel.id not in self.channel_ids:
+            return
+        
+        if message.author == self.user:
+            return
+        
+        """
+        if self.enable_commands and message.content.startswith('!'):
+            if message.content == '!clear':
+                await message.channel.purge()
+                return        
+        """
+
+        last_messages = await self.get_last_messages(message)
+        context = '\n'.join(last_messages)
+
+        logger.info('Received message: {0.content}'.format(message))
+        response = self.qa_engine.get_response(
+            question=message.content,
+            messages_context=context
+        )
+        logger.info('Sending response: {0}'.format(response))
+        try:
+            await self.send_message(
+                message,
+                response.get_answer(),
+                response.get_sources_as_text()
             )
-            logger.info('Sending response: {0}'.format(response))
-            try:
-                await self.send_message(
-                    message,
-                    response.get_answer(),
-                    response.get_sources_as_text()
-                )
-            except Exception as e:
-                logger.error('Failed to send response: {0}'.format(e))
+        except Exception as e:
+            logger.error('Failed to send response: {0}'.format(e))
