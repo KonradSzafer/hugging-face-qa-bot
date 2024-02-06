@@ -8,7 +8,7 @@ from qa_engine import logger
 def get_env(env_name: str, default: Any = None, warn: bool = True) -> str:
     env = os.getenv(env_name)
     if not env:
-        if default:
+        if default is not None:
             if warn:
                 logger.warning(
                     f'Environment variable {env_name} not found.' \
