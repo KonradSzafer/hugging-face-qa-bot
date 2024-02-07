@@ -21,7 +21,7 @@ def remove_old_files():
 
 def clone_repository():
     repo_url = 'https://github.com/KonradSzafer/hugging-face-qa-bot.git'
-    subprocess.run(['git', 'clone', repo_url])
+    subprocess.run(['git', 'clone', '--depth', '1', repo_url])
 
 
 def copy_files():
