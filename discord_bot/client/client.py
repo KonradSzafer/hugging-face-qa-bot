@@ -46,7 +46,7 @@ class DiscordClient(discord.Client):
             'The number of last messages in context should be at least 1'
 
         self.qa_engine: QAEngine = qa_engine
-        self.channel_ids: list[int] = channel_ids
+        self.channel_ids: list[int] = eval(channel_ids)
         self.num_last_messages: int = num_last_messages
         self.use_names_in_context: bool = use_names_in_context
         self.enable_commands: bool = enable_commands

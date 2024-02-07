@@ -16,7 +16,7 @@ qa_engine = QAEngine(
 )
 client = DiscordClient(
     qa_engine=qa_engine,
-    channel_ids=config.discotd_channel_ids,
+    channel_ids=config.discord_channel_ids,
     num_last_messages=config.num_last_messages,
     use_names_in_context=config.use_names_in_context,
     enable_commands=config.enable_commands,
