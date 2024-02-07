@@ -36,7 +36,7 @@ class Config:
 
     # Discord bot config - optional
     discord_token: str = get_env('DISCORD_TOKEN', '-', warn=False)
-    discotd_channel_ids: list[int] = eval(get_env('DISCORD_CHANNEL_IDS', [], warn=False))
+    discotd_channel_ids: list[int] = get_env('DISCORD_CHANNEL_IDS', [], warn=False)
     num_last_messages: int = int(get_env('NUM_LAST_MESSAGES', 2, warn=False))
     use_names_in_context: bool = eval(get_env('USE_NAMES_IN_CONTEXT', 'False', warn=False))
     enable_commands: bool = eval(get_env('ENABLE_COMMANDS', 'True', warn=False))
