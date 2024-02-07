@@ -1,6 +1,7 @@
 import os
 import shutil
 import subprocess
+import warnings
 from pathlib import Path
 
 
@@ -37,7 +38,18 @@ def copy_files():
     shutil.rmtree(src)
 
 
+def main():
+    path = os.getcwd().lower()
+    current_dir = path.split('/')[-1]
+    if current_dir != 'hugging-face-qa-bot':
+        print('Updating the HF space...')
+        remove_old_files()
+        clone_repository()
+        copy_files()
+    else:
+        warnings.warn('You are in the hugging-face-qa-bot reposotory')
+
+
 if __name__ == '__main__':
-    remove_old_files()
-    clone_repository()
-    copy_files()
+    main()
+   
