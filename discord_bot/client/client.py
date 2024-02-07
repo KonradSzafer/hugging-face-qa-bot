@@ -46,13 +46,25 @@ class DiscordClient(discord.Client):
             'The number of last messages in context should be at least 1'
 
         self.qa_engine: QAEngine = qa_engine
-        self.channel_ids: list[int] = eval(channel_ids)
+        self.channel_ids: list[int] = DiscordClient._process_channel_ids(channel_ids)
         self.num_last_messages: int = num_last_messages
         self.use_names_in_context: bool = use_names_in_context
         self.enable_commands: bool = enable_commands
         self.debug: bool = debug
         self.min_messgae_len: int = 1800
         self.max_message_len: int = 2000
+        
+    
+    @staticmethod
+    def _process_channel_ids(channel_ids) -> list[int]:
+        if isinstance(channel_ids, str):
+            return eval(channel_ids)
+        elif isinstance(channel_ids, list):
+            return channel_ids
+        elif isinstance(channel_ids, int):
+            return [channel_ids]
+        else:
+            return []
 
 
     async def on_ready(self):
