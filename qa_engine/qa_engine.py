@@ -292,8 +292,9 @@ class QAEngine():
                 )
             ]
             relevant_docs = relevant_docs[:self.num_relevant_docs]
-            context += '\nExtracted documents:\n'
-            context += ''.join([doc.page_content for doc in relevant_docs])
+            context += '\nEXTRACTED DOCUMENTS:\n'
+            for i, (doc) in enumerate(relevant_docs):
+                context += f'\n\n<DOCUMENT_{i}>\n {doc.page_content} \n</DOCUMENT_{i}>'
             metadata = [doc.metadata for doc in relevant_docs]
             response.set_sources(sources=[str(m['source']) for m in metadata])
 

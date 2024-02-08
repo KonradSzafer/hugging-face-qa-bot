@@ -11,7 +11,7 @@ def get_env(env_name: str, default: Any = None, warn: bool = True) -> str:
         if default is not None:
             if warn:
                 logger.warning(
-                    f'Environment variable {env_name} not found.' \
+                    f'Environment variable {env_name} not found. ' \
                     f'Using the default value: {default}.'
                 )
             return default
@@ -36,7 +36,7 @@ class Config:
 
     # Discord bot config - optional
     discord_token: str = get_env('DISCORD_TOKEN', '-', warn=False)
-    discord_channel_ids: list[int] = get_env('DISCORD_CHANNEL_IDS', field(default_factory=list), warn=False)
+    discord_channel_ids: list[int] = get_env('DISCORD_CHANNEL_IDS', field(default_factory=list), warn=True)
     num_last_messages: int = int(get_env('NUM_LAST_MESSAGES', 2, warn=False))
     use_names_in_context: bool = eval(get_env('USE_NAMES_IN_CONTEXT', 'False', warn=False))
     enable_commands: bool = eval(get_env('ENABLE_COMMANDS', 'True', warn=False))

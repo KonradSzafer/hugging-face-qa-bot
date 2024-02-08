@@ -41,12 +41,14 @@ def gradio_interface():
 def discord_bot_inference_thread():
     client = DiscordClient(
         qa_engine=qa_engine,
+        channel_ids=config.discord_channel_ids,
         num_last_messages=config.num_last_messages,
         use_names_in_context=config.use_names_in_context,
         enable_commands=config.enable_commands,
         debug=config.debug
     )
     client.run(config.discord_token)
+
 
 def discord_bot():
     thread = threading.Thread(target=discord_bot_inference_thread)
