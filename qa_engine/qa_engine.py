@@ -181,30 +181,11 @@ class QAEngine():
         self.first_stage_docs = first_stage_docs
         self.debug = debug
 
-        if 'local_models/' in llm_model_id:
-            logger.info('using local binary model')
-            self.llm_model = LocalBinaryModel(
-                model_id=llm_model_id
-            )
-        elif 'api_models/' in llm_model_id:
-            logger.info('using api served model')
-            self.llm_model = APIServedModel(
-                model_url=llm_model_id.replace('api_models/', ''),
-                debug=self.debug
-            )
-        elif llm_model_id == 'mock':
-            logger.info('using mock model')
-            self.llm_model = MockLocalBinaryModel()
-        else:
-            logger.info('using transformers pipeline model')
-            self.llm_model = TransformersPipelineModel(
-                model_id=llm_model_id
-            )
-
         prompt = PromptTemplate(
             template=prompt_template,
             input_variables=['question', 'context']
         )
+        self.llm_model = QAEngine._get_model(llm_model_id)
         self.llm_chain = LLMChain(prompt=prompt, llm=self.llm_model)
 
         if self.use_docs_for_context:
@@ -226,6 +207,29 @@ class QAEngine():
             logger.info('Loading index')
             self.knowledge_index = FAISS.load_local('./indexes/run/', embedding_model)
             self.reranker = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-12-v2')
+
+
+    @staticmethod
+    def _get_model(llm_model_id: str):
+        if 'local_models/' in llm_model_id:
+            logger.info('using local binary model')
+            return LocalBinaryModel(
+                model_id=llm_model_id
+            )
+        elif 'api_models/' in llm_model_id:
+            logger.info('using api served model')
+            return APIServedModel(
+                model_url=llm_model_id.replace('api_models/', ''),
+                debug=self.debug
+            )
+        elif llm_model_id == 'mock':
+            logger.info('using mock model')
+            return MockLocalBinaryModel()
+        else:
+            logger.info('using transformers pipeline model')
+            return TransformersPipelineModel(
+                model_id=llm_model_id
+            )
 
 
     @staticmethod

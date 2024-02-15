@@ -48,6 +48,7 @@ def discord_bot_inference_thread():
     )
     client.run(config.discord_token)
 
+
 def discord_bot():
     thread = threading.Thread(target=discord_bot_inference_thread)
     thread.start()
