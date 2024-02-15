@@ -180,7 +180,8 @@ def markdown_cleaner(data: str):
 
 
 if __name__ == '__main__':
-    repo_urls_file = "./datasets/hf_repositories_urls.json"
+    # repo_urls_file = "./datasets/hf_repositories_urls.json"
+    repo_urls_file = "./datasets/hf_repositories_urls_scraped.json"
     repo_dir = "./datasets/huggingface_repositories/"
     docs_dir = "./datasets/huggingface_docs/"
     download_repositories(repo_urls_file, repo_dir)
