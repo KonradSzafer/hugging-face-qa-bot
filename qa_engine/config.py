@@ -34,6 +34,14 @@ class Config:
     use_messages_in_context: bool = eval(get_env('USE_MESSAGES_IN_CONTEXT', 'True'))
     debug: bool = eval(get_env('DEBUG', 'True'))
 
+    # Model config
+    min_new_tokens: int = int(get_env('MIN_NEW_TOKENS', 64))
+    max_new_tokens: int = int(get_env('MAX_NEW_TOKENS', 800))
+    temperature: float = float(get_env('TEMPERATURE', 0.6))
+    top_k: int = int(get_env('TOP_K', 50))
+    top_p: float = float(get_env('TOP_P', 0.95))
+    do_sample: bool = eval(get_env('DO_SAMPLE', 'True'))
+
     # Discord bot config - optional
     discord_token: str = get_env('DISCORD_TOKEN', '-', warn=False)
     discord_channel_ids: list[int] = get_env('DISCORD_CHANNEL_IDS', field(default_factory=list), warn=False)
