@@ -4,55 +4,39 @@ from urllib.parse import quote
 import discord
 from typing import List
 
-from qa_engine import logger, QAEngine
+from qa_engine import logger, Config, QAEngine
 from discord_bot.client.utils import split_text_into_chunks
 
 
 class DiscordClient(discord.Client):
     """
     Discord Client class, used for interacting with a Discord server.
-
-    Args:
-        qa_service_url (str): The URL of the question answering service.
-        num_last_messages (int, optional): The number of previous messages to use as context for generating answers.
-        Defaults to 5.
-        use_names_in_context (bool, optional): Whether to include user names in the message context. Defaults to True.
-        enable_commands (bool, optional): Whether to enable commands for the bot. Defaults to True.
-
-    Attributes:
-        qa_service_url (str): The URL of the question answering service.
-        num_last_messages (int): The number of previous messages to use as context for generating answers.
-        use_names_in_context (bool): Whether to include user names in the message context.
-        enable_commands (bool): Whether to enable commands for the bot.
-        max_message_len (int): The maximum length of a message.
-        system_prompt (str): The system prompt to be used.
-
     """
     def __init__(
         self,
         qa_engine: QAEngine,
-        channel_ids: list[int] = [],
-        num_last_messages: int = 5,
-        use_names_in_context: bool = True,
-        enable_commands: bool = True,
-        debug: bool = False
-    ):
+        config: Config,  
+    ):  
         logger.info('Initializing Discord client...')
         intents = discord.Intents.all()
         intents.message_content = True
         super().__init__(intents=intents, command_prefix='!')
 
-        assert num_last_messages >= 1, \
-            'The number of last messages in context should be at least 1'
-
         self.qa_engine: QAEngine = qa_engine
-        self.channel_ids: list[int] = DiscordClient._process_channel_ids(channel_ids)
-        self.num_last_messages: int = num_last_messages
-        self.use_names_in_context: bool = use_names_in_context
-        self.enable_commands: bool = enable_commands
-        self.debug: bool = debug
-        self.min_messgae_len: int = 1800
+        self.channel_ids: list[int] = DiscordClient._process_channel_ids(
+            config.discord_channel_ids
+        )
+        self.num_last_messages: int = config.num_last_messages
+        self.use_names_in_context: bool = config.use_names_in_context
+        self.enable_commands: bool = config.enable_commands
+        self.debug: bool = config.debug
+        self.min_message_len: int = 1800
         self.max_message_len: int = 2000
+        
+        assert all([isinstance(id, int) for id in self.channel_ids]), \
+            'All channel ids should be of type int'
+        assert self.num_last_messages >= 1, \
+            'The number of last messages in context should be at least 1'
         
     
     @staticmethod
@@ -103,7 +87,7 @@ class DiscordClient(discord.Client):
         chunks = split_text_into_chunks(
             text=answer,
             split_characters=['. ', ', ', '\n'],
-            min_size=self.min_messgae_len,
+            min_size=self.min_message_len,
             max_size=self.max_message_len
         )
         for chunk in chunks:

@@ -10,7 +10,7 @@ class MockLocalBinaryModel(LLM):
     """
 
     model_path: str = None
-    llm: str = 'Mocked Response'
+    llm: str = 'Warsaw'
 
     def __init__(self):
         super().__init__()

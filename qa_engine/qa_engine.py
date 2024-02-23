@@ -16,7 +16,7 @@ from langchain.embeddings import HuggingFaceEmbeddings, HuggingFaceHubEmbeddings
 from langchain.vectorstores import FAISS
 from sentence_transformers import CrossEncoder
 
-from qa_engine import logger
+from qa_engine import logger, Config
 from qa_engine.response import Response
 from qa_engine.mocks import MockLocalBinaryModel
 
@@ -132,66 +132,35 @@ class APIServedModel(LLM):
         return 'api_model'
 
 
-
 class QAEngine():
     """
     QAEngine class, used for generating answers to questions.
-
-    Args:
-        llm_model_id (str): The ID of the LLM model to be used.
-        embedding_model_id (str): The ID of the embedding model to be used.
-        index_repo_id (str): The ID of the index repository to be used.
-        run_locally (bool, optional): Whether to run the models locally or on the Hugging Face hub. Defaults to True.
-        use_docs_for_context (bool, optional): Whether to use relevant documents as context for generating answers.
-        Defaults to True.
-        use_messages_for_context (bool, optional): Whether to use previous messages as context for generating answers.
-        Defaults to True.
-        debug (bool, optional): Whether to log debug information. Defaults to False.
-
-    Attributes:
-        use_docs_for_context (bool): Whether to use relevant documents as context for generating answers.
-        use_messages_for_context (bool): Whether to use previous messages as context for generating answers.
-        debug (bool): Whether to log debug information.
-        llm_model (Union[LocalBinaryModel, HuggingFacePipeline, HuggingFaceHub]): The LLM model to be used.
-        embedding_model (Union[HuggingFaceInstructEmbeddings, HuggingFaceHubEmbeddings]): The embedding model to be used.
-        prompt_template (PromptTemplate): The prompt template to be used.
-        llm_chain (LLMChain): The LLM chain to be used.
-        knowledge_index (FAISS): The FAISS index to be used.
-
     """
-    def __init__(
-        self,
-        llm_model_id: str,
-        embedding_model_id: str,
-        index_repo_id: str,
-        prompt_template: str,
-        use_docs_for_context: bool = True,
-        num_relevant_docs: int = 3,
-        add_sources_to_response: bool = True,
-        use_messages_for_context: bool = True,
-        first_stage_docs: int = 50,
-        debug: bool = False
-    ):
+    def __init__(self, config: Config):
         super().__init__()
-        self.prompt_template = prompt_template
-        self.use_docs_for_context = use_docs_for_context
-        self.num_relevant_docs = num_relevant_docs
-        self.add_sources_to_response = add_sources_to_response
-        self.use_messages_for_context = use_messages_for_context
-        self.first_stage_docs = first_stage_docs
-        self.debug = debug
+        self.llm_model_id=config.question_answering_model_id
+        self.embedding_model_id=config.embedding_model_id
+        self.index_repo_id=config.index_repo_id
+        self.prompt_template=config.prompt_template
+        self.use_docs_for_context=config.use_docs_for_context
+        self.num_relevant_docs=config.num_relevant_docs
+        self.add_sources_to_response=config.add_sources_to_response
+        self.use_messages_for_context=config.use_messages_in_context
+        self.debug=config.debug
+        
+        self.first_stage_docs: int = 50
 
         prompt = PromptTemplate(
-            template=prompt_template,
+            template=self.prompt_template,
             input_variables=['question', 'context']
         )
-        self.llm_model = QAEngine._get_model(llm_model_id)
+        self.llm_model = QAEngine._get_model(self.llm_model_id)
         self.llm_chain = LLMChain(prompt=prompt, llm=self.llm_model)
 
         if self.use_docs_for_context:
-            logger.info(f'Downloading {index_repo_id}')
+            logger.info(f'Downloading {self.index_repo_id}')
             snapshot_download(
-                repo_id=index_repo_id,
+                repo_id=self.index_repo_id,
                 allow_patterns=['*.faiss', '*.pkl'], 
                 repo_type='dataset',
                 local_dir='indexes/run/'
@@ -200,7 +169,7 @@ class QAEngine():
             embed_instruction = 'Represent the Hugging Face library documentation'
             query_instruction = 'Query the most relevant piece of information from the Hugging Face documentation'
             embedding_model = HuggingFaceInstructEmbeddings(
-                model_name=embedding_model_id,
+                model_name=self.embedding_model_id,
                 embed_instruction=embed_instruction,
                 query_instruction=query_instruction
             )
@@ -234,7 +203,7 @@ class QAEngine():
 
     @staticmethod
     def _preprocess_question(question: str) -> str:
-        if question[-1] != '?':
+        if '?' not in question:
             question += '?'
         return question
 
@@ -245,7 +214,8 @@ class QAEngine():
         Preprocess the answer by removing unnecessary sequences and stop sequences.
         '''
         SEQUENCES_TO_REMOVE = [
-            'Factually: ', 'Answer: ', '<<SYS>>', '<</SYS>>', '[INST]', '[/INST]'
+            'Factually: ', 'Answer: ', '<<SYS>>', '<</SYS>>', '[INST]', '[/INST]',
+            '<context>', '<\context>', '<question>', '<\question>',
         ]
         SEQUENCES_TO_STOP = [
             'User:', 'You:', 'Question:'
