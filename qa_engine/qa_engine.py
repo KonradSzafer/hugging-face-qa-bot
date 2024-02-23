@@ -23,6 +23,7 @@ from qa_engine.mocks import MockLocalBinaryModel
 
 class LocalBinaryModel(LLM):
     model_id: str = None
+    model_path: str = None
     llm: None = None
 
     def __init__(self, config: Config):
@@ -56,6 +57,12 @@ class LocalBinaryModel(LLM):
 
 class TransformersPipelineModel(LLM):
     model_id: str = None
+    min_new_tokens: int = None
+    max_new_tokens: int = None
+    temperature: float = None
+    top_k: int = None
+    top_p: float = None
+    do_sample: bool = None
     pipeline: str = None
 
     def __init__(self, config: Config):
