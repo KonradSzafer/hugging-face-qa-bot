@@ -25,16 +25,16 @@ class LocalBinaryModel(LLM):
     model_id: str = None
     llm: None = None
 
-    def __init__(self, model_id: str = None):
+    def __init__(self, config: Config):
         super().__init__()
         # pip install llama_cpp_python==0.1.39
         from llama_cpp import Llama
 
-        model_path = f'qa_engine/{model_id}'
-        if not os.path.exists(model_path):
-            raise ValueError(f'{model_path} does not exist')
-        self.model_id = model_id
-        self.llm = Llama(model_path=model_path, n_ctx=4096)
+        self.model_id = config.question_answering_model_id
+        self.model_path = f'qa_engine/{self.model_id}'
+        if not os.path.exists(self.model_path):
+            raise ValueError(f'{self.model_path} does not exist')
+        self.llm = Llama(model_path=self.model_path, n_ctx=4096)
 
     def _call(self, prompt: str, stop: Optional[list[str]] = None) -> str:
         output = self.llm(
@@ -58,13 +58,19 @@ class TransformersPipelineModel(LLM):
     model_id: str = None
     pipeline: str = None
 
-    def __init__(self, model_id: str = None):
+    def __init__(self, config: Config):
         super().__init__()
-        self.model_id = model_id
+        self.model_id = config.question_answering_model_id
+        self.min_new_tokens = config.min_new_tokens
+        self.max_new_tokens = config.max_new_tokens
+        self.temperature = config.temperature
+        self.top_k = config.top_k
+        self.top_p = config.top_p
+        self.do_sample = config.do_sample
 
-        tokenizer = AutoTokenizer.from_pretrained(model_id)
+        tokenizer = AutoTokenizer.from_pretrained(self.model_id)
         model = AutoModelForCausalLM.from_pretrained(
-            model_id,
+            self.model_id,
             torch_dtype=torch.bfloat16,
             trust_remote_code=True,
             load_in_8bit=False,
@@ -79,10 +85,12 @@ class TransformersPipelineModel(LLM):
             device_map='auto',
             eos_token_id=tokenizer.eos_token_id,
             pad_token_id=tokenizer.eos_token_id,
-            min_new_tokens=64,
-            max_new_tokens=800,
-            temperature=0.5,
-            do_sample=True,
+            min_new_tokens=self.min_new_tokens,
+            max_new_tokens=self.max_new_tokens,
+            temperature=self.temperature,
+            top_k=self.top_k,
+            top_p=self.top_p,
+            do_sample=self.do_sample,
         )
 
     def _call(self, prompt: str, stop: Optional[list[str]] = None) -> str:
@@ -103,7 +111,7 @@ class APIServedModel(LLM):
     model_url: str = None
     debug: bool = None
 
-    def __init__(self, model_url: str = None, debug: bool = None):
+    def __init__(self, model_url: str, debug: bool = False):
         super().__init__()
         if model_url[-1] == '/':
             raise ValueError('URL should not end with a slash - "/"')
@@ -138,7 +146,8 @@ class QAEngine():
     """
     def __init__(self, config: Config):
         super().__init__()
-        self.llm_model_id=config.question_answering_model_id
+        self.config = config
+        self.question_answering_model_id=config.question_answering_model_id
         self.embedding_model_id=config.embedding_model_id
         self.index_repo_id=config.index_repo_id
         self.prompt_template=config.prompt_template
@@ -154,7 +163,7 @@ class QAEngine():
             template=self.prompt_template,
             input_variables=['question', 'context']
         )
-        self.llm_model = QAEngine._get_model(self.llm_model_id)
+        self.llm_model = self._get_model()
         self.llm_chain = LLMChain(prompt=prompt, llm=self.llm_model)
 
         if self.use_docs_for_context:
@@ -178,27 +187,22 @@ class QAEngine():
             self.reranker = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-12-v2')
 
 
-    @staticmethod
-    def _get_model(llm_model_id: str):
-        if 'local_models/' in llm_model_id:
+    def _get_model(self):
+        if 'local_models/' in self.question_answering_model_id:
             logger.info('using local binary model')
-            return LocalBinaryModel(
-                model_id=llm_model_id
-            )
-        elif 'api_models/' in llm_model_id:
+            return LocalBinaryModel(self.config)
+        elif 'api_models/' in self.question_answering_model_id:
             logger.info('using api served model')
             return APIServedModel(
-                model_url=llm_model_id.replace('api_models/', ''),
+                model_url=self.question_answering_model_id.replace('api_models/', ''),
                 debug=self.debug
             )
-        elif llm_model_id == 'mock':
+        elif self.question_answering_model_id == 'mock':
             logger.info('using mock model')
             return MockLocalBinaryModel()
         else:
             logger.info('using transformers pipeline model')
-            return TransformersPipelineModel(
-                model_id=llm_model_id
-            )
+            return TransformersPipelineModel(self.config)
 
 
     @staticmethod
