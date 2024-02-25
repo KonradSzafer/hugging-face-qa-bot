@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import requests
 import subprocess
@@ -226,16 +227,21 @@ class QAEngine():
         '''
         SEQUENCES_TO_REMOVE = [
             'Factually: ', 'Answer: ', '<<SYS>>', '<</SYS>>', '[INST]', '[/INST]',
-            '<context>', '<\context>', '<question>', '<\question>',
+            '<context>', '</context>', '<question>', '</question>',
         ]
         SEQUENCES_TO_STOP = [
             'User:', 'You:', 'Question:'
+        ]
+        CHARS_TO_DEDUPLICATE = [
+            '\n', '\t', ' '
         ]
         for seq in SEQUENCES_TO_REMOVE:
             answer = answer.replace(seq, '')
         for seq in SEQUENCES_TO_STOP:
             if seq in answer:
-                answer = answer[:answer.index(seq)]
+                answer = answer[:answer.index(seq)]        
+        for char in CHARS_TO_DEDUPLICATE:
+            answer = re.sub(f'{char}+', f'{char}', answer)
         answer = answer.strip()
         return answer
 
