@@ -83,7 +83,6 @@ class TransformersPipelineModel(LLM):
             trust_remote_code=True,
             load_in_8bit=False,
             device_map='auto',
-            resume_download=True,
         )
         self.pipeline = transformers.pipeline(
             'text-generation',

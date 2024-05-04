@@ -1,5 +1,4 @@
 torch
-torchvision
 transformers
 accelerate
 einops
@@ -8,6 +7,7 @@ gradio
 numpy
 wandb
 tqdm
+flash-attn
 beautifulsoup4==4.12.0
 discord.py==2.2.2
 evaluate==0.4.0

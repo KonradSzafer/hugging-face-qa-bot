@@ -1,0 +1,1 @@
+<|user|>\n Try to be as factual as possible. Answer a question from a given context. CONTEXT: {context} \n QUESTION: {question} <|end|>\n<|assistant|>
