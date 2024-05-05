@@ -1,19 +1,11 @@
-import os
 import re
-import json
-import requests
-import subprocess
 from typing import Mapping, Optional, Any
 
 import torch
 import transformers
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from huggingface_hub import snapshot_download
-from urllib.parse import quote
-from langchain import PromptTemplate, HuggingFaceHub, LLMChain
-from langchain.llms import HuggingFacePipeline
-from langchain.llms.base import LLM
-from langchain.embeddings import HuggingFaceEmbeddings, HuggingFaceHubEmbeddings, HuggingFaceInstructEmbeddings
+from langchain.embeddings import HuggingFaceInstructEmbeddings
 from langchain.vectorstores import FAISS
 from sentence_transformers import CrossEncoder
 
@@ -22,41 +14,7 @@ from qa_engine.response import Response
 from qa_engine.mocks import MockLocalBinaryModel
 
 
-class LocalBinaryModel(LLM):
-    model_id: str = None
-    model_path: str = None
-    llm: None = None
-
-    def __init__(self, config: Config):
-        super().__init__()
-        # pip install llama_cpp_python==0.1.39
-        from llama_cpp import Llama
-
-        self.model_id = config.question_answering_model_id
-        self.model_path = f'qa_engine/{self.model_id}'
-        if not os.path.exists(self.model_path):
-            raise ValueError(f'{self.model_path} does not exist')
-        self.llm = Llama(model_path=self.model_path, n_ctx=4096)
-
-    def _call(self, prompt: str, stop: Optional[list[str]] = None) -> str:
-        output = self.llm(
-            prompt,
-            max_tokens=1024,
-            stop=['Q:'],
-            echo=False
-        )
-        return output['choices'][0]['text']
-
-    @property
-    def _identifying_params(self) -> Mapping[str, Any]:
-        return {'name_of_model': self.model_id}
-
-    @property
-    def _llm_type(self) -> str:
-        return self.model_id
-
-
-class TransformersPipelineModel(LLM):
+class HuggingFaceModel:
     model_id: str = None
     min_new_tokens: int = None
     max_new_tokens: int = None
@@ -64,7 +22,8 @@ class TransformersPipelineModel(LLM):
     top_k: int = None
     top_p: float = None
     do_sample: bool = None
-    pipeline: str = None
+    tokenizer: transformers.PreTrainedTokenizer = None
+    model: transformers.PreTrainedModel = None
 
     def __init__(self, config: Config):
         super().__init__()
@@ -76,34 +35,32 @@ class TransformersPipelineModel(LLM):
         self.top_p = config.top_p
         self.do_sample = config.do_sample
 
-        tokenizer = AutoTokenizer.from_pretrained(self.model_id)
-        model = AutoModelForCausalLM.from_pretrained(
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_id)
+        self.model = AutoModelForCausalLM.from_pretrained(
             self.model_id,
-            torch_dtype=torch.bfloat16,
-            trust_remote_code=True,
-            load_in_8bit=False,
-            device_map='auto',
-        )
-        self.pipeline = transformers.pipeline(
-            'text-generation',
-            model=model,
-            tokenizer=tokenizer,
-            torch_dtype=torch.bfloat16,
-            device_map='auto',
-            eos_token_id=tokenizer.eos_token_id,
-            pad_token_id=tokenizer.eos_token_id,
-            min_new_tokens=self.min_new_tokens,
-            max_new_tokens=self.max_new_tokens,
-            temperature=self.temperature,
-            top_k=self.top_k,
-            top_p=self.top_p,
-            do_sample=self.do_sample,
+            torch_dtype=torch.float16,
+            device_map="auto"
         )
 
     def _call(self, prompt: str, stop: Optional[list[str]] = None) -> str:
-        output_text = self.pipeline(prompt)[0]['generated_text']
-        output_text = output_text.replace(prompt+'\n', '')
-        return output_text
+        tokenized_prompt = self.tokenizer(
+            self.tokenizer.bos_token + prompt, 
+            return_tensors="pt"
+        ).to(self.model.device)
+        terminators = [
+            self.tokenizer.eos_token_id,
+            self.tokenizer.convert_tokens_to_ids("<|eot_id|>")
+        ]
+        outputs = self.model.generate(
+            input_ids=tokenized_prompt.input_ids,
+            attention_mask=tokenized_prompt.attention_mask,
+            min_new_tokens=self.min_new_tokens,
+            max_new_tokens=self.max_new_tokens,
+            eos_token_id=terminators
+        )
+        response = outputs[0][tokenized_prompt.input_ids.shape[-1]:]
+        decoded_response = self.tokenizer.decode(response, skip_special_tokens=True)
+        return decoded_response
 
     @property
     def _identifying_params(self) -> Mapping[str, Any]:
@@ -112,39 +69,6 @@ class TransformersPipelineModel(LLM):
     @property
     def _llm_type(self) -> str:
         return self.model_id
-
-
-class APIServedModel(LLM):
-    model_url: str = None
-    debug: bool = None
-
-    def __init__(self, model_url: str, debug: bool = False):
-        super().__init__()
-        if model_url[-1] == '/':
-            raise ValueError('URL should not end with a slash - "/"')
-        self.model_url = model_url
-        self.debug = debug
-
-    def _call(self, prompt: str, stop: Optional[list[str]] = None) -> str:
-        prompt_encoded = quote(prompt, safe='')
-        url = f'{self.model_url}/?prompt={prompt_encoded}'
-        if self.debug:
-            logger.info(f'URL: {url}')
-        try:
-            response = requests.get(url, timeout=1200, verify=False)
-            response.raise_for_status() 
-            return json.loads(response.content)['output_text']
-        except Exception as err:
-            logger.error(f'Error: {err}')
-            return f'Error: {err}'
-
-    @property
-    def _identifying_params(self) -> Mapping[str, Any]:
-        return {'name_of_model': f'model url: {self.model_url}'}
-
-    @property
-    def _llm_type(self) -> str:
-        return 'api_model'
 
 
 class QAEngine():
@@ -162,16 +86,10 @@ class QAEngine():
         self.num_relevant_docs=config.num_relevant_docs
         self.add_sources_to_response=config.add_sources_to_response
         self.use_messages_for_context=config.use_messages_in_context
-        self.debug=config.debug
-        
+        self.debug=config.debug        
         self.first_stage_docs: int = 50
 
-        prompt = PromptTemplate(
-            template=self.prompt_template,
-            input_variables=['question', 'context']
-        )
         self.llm_model = self._get_model()
-        self.llm_chain = LLMChain(prompt=prompt, llm=self.llm_model)
 
         if self.use_docs_for_context:
             logger.info(f'Downloading {self.index_repo_id}')
@@ -195,29 +113,39 @@ class QAEngine():
 
 
     def _get_model(self):
-        if 'local_models/' in self.question_answering_model_id:
-            logger.info('using local binary model')
-            return LocalBinaryModel(self.config)
-        elif 'api_models/' in self.question_answering_model_id:
-            logger.info('using api served model')
-            return APIServedModel(
-                model_url=self.question_answering_model_id.replace('api_models/', ''),
-                debug=self.debug
-            )
-        elif self.question_answering_model_id == 'mock':
-            logger.info('using mock model')
+        if self.question_answering_model_id == 'mock':
+            logger.warn('using mock model')
             return MockLocalBinaryModel()
         else:
             logger.info('using transformers pipeline model')
-            return TransformersPipelineModel(self.config)
-
-
+            return HuggingFaceModel(self.config)
+    
     @staticmethod
-    def _preprocess_question(question: str) -> str:
+    def _preprocess_input(question: str, context: str) -> str:
         if '?' not in question:
             question += '?'
-        return question
+        
+        # llama3 chatQA specific
+        messages = [
+            {"role": "user", "content": question}
+        ]
 
+        system = "System: This is a chat between a user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions based on the context. The assistant should also indicate when the answer cannot be found in the context."
+        instruction = "Please give a full and complete answer for the question."
+
+        for item in messages:
+            if item['role'] == "user":
+                ## only apply this instruction for the first user turn
+                item['content'] = instruction + " " + item['content']
+                break
+
+        conversation = '\n\n'.join([
+            "User: " + item["content"] if item["role"] == "user" else
+            "Assistant: " + item["content"] for item in messages
+        ]) + "\n\nAssistant:"
+
+        inputs = system + "\n\n" + context + "\n\n" + conversation
+        return inputs
 
     @staticmethod
     def _postprocess_answer(answer: str) -> str:
@@ -288,8 +216,8 @@ class QAEngine():
             response.set_sources(sources=[str(m['source']) for m in metadata])
 
         logger.info('Running LLM chain')
-        question_processed = QAEngine._preprocess_question(question)
-        answer = self.llm_chain.run(question=question_processed, context=context)
+        inputs = QAEngine._preprocess_input(question, context)
+        answer = self.llm_model._call(inputs)
         answer_postprocessed = QAEngine._postprocess_answer(answer)
         response.set_answer(answer_postprocessed)
         logger.info('Received answer')

@@ -2,6 +2,8 @@ import logging
 
 
 logger = logging.getLogger(__name__)
+logging.getLogger('discord').setLevel(logging.ERROR)
+logging.getLogger('discord.gateway').setLevel(logging.ERROR)
 
 def setup_logger() -> None:
     """
