@@ -30,6 +30,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          pip3 install --upgrade pip
           pip install --no-cache-dir -r requirements.txt
           cp config/.env.example config/.env
       - name: Run unit tests
